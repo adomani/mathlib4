@@ -69,6 +69,10 @@ You may want to subscribe to the `mathlib4` stream
   lake exe mk_all
   ```
 
+A new definition looks like this:
+
+def Hello := 0
+
 ### Guidelines
 
 Mathlib has the following guidelines and conventions that must be followed
