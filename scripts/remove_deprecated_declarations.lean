@@ -3,20 +3,39 @@ Copyright (c) 2025 Damiano Testa. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Damiano Testa
 -/
-import Mathlib --.Deprecated.Order
-
+--import Mathlib --.Deprecated.Order
+import Lean
+import Mathlib.mwe_deprecations
 /-!
 d
 -/
 
 open Lean Elab Command
 
+/--
+The main structure containing the information a deprecated declaration.
+* `module` is the name of the module containing the deprecated declaration;
+* `rgStart` is the `Position` where the deprecated declaration starts;
+* `rgStop` is the `Position` where the deprecated declaration ends;
+* `since` is the date when the declaration was deprecated.
+-/
 structure DeprecationInfo where
+  /-- `module` is the name of the module containing the deprecated declaration. -/
   module : Name
+  /-- `rgStart` is the `Position` where the deprecated declaration starts. -/
   rgStart : Position
+  /-- `rgStop` is the `Position` where the deprecated declaration ends. -/
   rgStop : Position
+  /-- `since` is the date when the declaration was deprecated. -/
   since : String
 
+/--
+If `nm` is the name of a declaration, then `getDeprecatedInfo nm` returns the
+`DeprecationInfo` data for `nm`.
+Otherwise, it returns `none`.
+
+If the `verbose?` input is `true`, then the command also summarizes what the data is.
+-/
 def getDeprecatedInfo (nm : Name) (verbose? : Bool) :
     CommandElabM (Option DeprecationInfo) := do
   let env ← getEnv
@@ -36,11 +55,17 @@ def getDeprecatedInfo (nm : Name) (verbose? : Bool) :
         return some {module := mod, rgStart := rg.pos, rgStop := rg.endPos, since := since}
   return none
 
+/--
+Assume that the input `fin` is sorted so that the `start` of each entry is not larger than
+the start of the following one.
+`cleanUpRanges fin` is the sub-array of `fin` consisting of all the entries that do not
+correspond to ranges entirely contained in the previous one.
+-/
 def cleanUpRanges (fin : Array String.Range) : Array String.Range :=
   fin.foldl (init := #[]) fun tot n =>
     if let some back := tot.back? then
       if back.start ≤ n.start && n.stop ≤ back.stop then
-        tot.pop.push n
+        tot
       else
         tot.push n
     else
@@ -59,8 +84,9 @@ def deprecatedHashMap (deprecateFrom : String) :
       let file ← IO.FS.readFile lean
       let fm := FileMap.ofString file
       let rg : String.Range := ⟨fm.ofPosition rgStart, fm.ofPosition rgStop⟩
+      dbg_trace (rgStart, rgStop)
       fin := fin.alter lean.toString fun a =>
-        (a.getD #[⟨fm.positions.back!, default⟩]).binInsert (·.1 < ·.1) rg
+        (a.getD #[⟨fm.positions.back!, fm.positions.back! + ⟨1⟩⟩]).binInsert (·.1 < ·.1) rg
   return fin
 
 def removeDeprecations (fname : String) (rgs : Array String.Range) : IO String := do
@@ -78,11 +104,12 @@ def removeDeprecations (fname : String) (rgs : Array String.Range) : IO String :
 
 open Lean Elab Command in
 elab "#remove_deprecated_declarations " date:str really?:("really")? : command => do
+  let repo := "Mathlib"
   let deprecateFrom := date.getString
   let dmap ← deprecatedHashMap deprecateFrom
-  dbg_trace "{dmap.fold (init := 0) fun tot _ rgs => tot + rgs.size} deprecations among {dmap.size} files"
+  dbg_trace "{dmap.fold (init := 0) fun tot _ rgs => tot + rgs.size - 1} deprecations among {dmap.size} files"
   for (mod, rgs) in dmap.toArray.qsort (·.1 < ·.1) do
-    let mod1 := "Mathlib" ++ (mod.splitOn "Mathlib").getLast!
+    let mod1 := repo ++ (mod.splitOn repo).getLast!
     let rgs := cleanUpRanges rgs
     dbg_trace "From '{mod1}' remove\n{rgs.map fun | ⟨a, b⟩ => (a, b)}\n---\n{← removeDeprecations mod rgs}"
     let num := rgs.size - 1
@@ -90,7 +117,12 @@ elab "#remove_deprecated_declarations " date:str really?:("really")? : command =
     if really?.isSome then
       IO.FS.writeFile mod (← removeDeprecations mod rgs)
 
-#remove_deprecated_declarations "2025-02-31" --really
+#remove_deprecated_declarations "2025-09-31" --really
+
+
+
+#exit
+
 /--
 info: import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Basic
 import Mathlib.Order.RelClasses
