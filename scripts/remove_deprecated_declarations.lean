@@ -5,12 +5,20 @@ Authors: Damiano Testa
 -/
 --import Mathlib --.Deprecated.Order
 import Lean
-import Mathlib.mwe_deprecations
+--import Mathlib.mwe_deprecations
 /-!
 d
 -/
 
 open Lean Elab Command
+
+/--
+This is the name of the directory containing all the files that should be inspected.
+For reporting, the script assumes there is no sub-dir of the `repo` dir that contains
+`repo` as a substring.
+However, the script should still remove old deprecations correctly even if that happens.
+-/
+def repo : Name := `Mathlib
 
 /--
 The main structure containing the information a deprecated declaration.
@@ -77,7 +85,7 @@ def deprecatedHashMap (deprecateFrom : String) :
   for (nm, _) in (← getEnv).constants.map₁ do
     if let some ⟨modName, rgStart, rgStop, since⟩ ← getDeprecatedInfo nm false
     then
-      if modName.getRoot != `Mathlib then continue
+      if modName.getRoot != repo then continue
       if deprecateFrom < since then
         continue
       let lean ← findLean (← getSrcSearchPath) modName
@@ -104,7 +112,7 @@ def removeDeprecations (fname : String) (rgs : Array String.Range) : IO String :
 
 open Lean Elab Command in
 elab "#remove_deprecated_declarations " date:str really?:("really")? : command => do
-  let repo := "Mathlib"
+  let repo := repo.toString
   let deprecateFrom := date.getString
   let dmap ← deprecatedHashMap deprecateFrom
   dbg_trace "{dmap.fold (init := 0) fun tot _ rgs => tot + rgs.size - 1} deprecations among {dmap.size} files"
