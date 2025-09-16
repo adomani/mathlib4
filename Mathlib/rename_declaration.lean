@@ -41,8 +41,7 @@ instance : ToString CInfo where
   toString c := s!"{c.expr} of kind {c.kind} @ {(c.rg.start, c.rg.stop)}"
 
 def Lean.Elab.Info.Constant? : Info → Option CInfo
-  | .ofTermInfo ti           =>
-    match ti.expr with
+  | .ofTermInfo ti => match ti.expr with
     | .const .. => some ⟨ti.stx.getKind, ti.expr, ti.stx.getRange?.getD default⟩
     | _ => none
   | _ => none
