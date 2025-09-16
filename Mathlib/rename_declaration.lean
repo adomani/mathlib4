@@ -33,6 +33,7 @@ structure CInfo where
   rg : String.Range
   deriving BEq, Hashable
 
+/-- Sort a set of `CInfo`s by their positions in the file. -/
 def sortCInfos (h : Std.HashSet CInfo) : Array CInfo :=
   h.toArray.qsort (fun a b =>
     a.rg.start < b.rg.start || (a.rg.start == b.rg.start && a.rg.stop < b.rg.stop))
@@ -40,12 +41,19 @@ def sortCInfos (h : Std.HashSet CInfo) : Array CInfo :=
 instance : ToString CInfo where
   toString c := s!"{c.expr} of kind {c.kind} @ {(c.rg.start, c.rg.stop)}"
 
+/--
+Returns some `CInfo` if the `Info` is a `TermInfo` whose expression is a constant.
+Otherwise, returns `none`.
+-/
 def Lean.Elab.Info.Constant? : Info → Option CInfo
   | .ofTermInfo ti => match ti.expr with
     | .const .. => some ⟨ti.stx.getKind, ti.expr, ti.stx.getRange?.getD default⟩
     | _ => none
   | _ => none
 
+/--
+Collect all `CInfo`s in an `InfoTree` corresponding to `TermInfo`s whose expressions are constants.
+-/
 partial
 def Lean.Elab.InfoTree.toConstants : InfoTree → Std.HashSet CInfo
   | .context _i t => t.toConstants
