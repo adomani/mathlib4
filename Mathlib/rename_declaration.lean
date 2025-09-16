@@ -8,6 +8,13 @@ def showFirst (n : Nat) (s : String) : String :=
 
 open Lean
 
+/--
+`CInfo` is the information about a deprecated constant.
+It contains:
+* the kind of syntax that produced it (`ident`, `dotIdent`, `identProj`);
+* the expression (which is the constant itself);
+* the range of the syntax that produced it.
+-/
 structure CInfo where
   /--
   For instance, if the constant name is `Nat.mySucc` taking a `Nat` `m` as input,
