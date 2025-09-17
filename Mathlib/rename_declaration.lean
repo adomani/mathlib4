@@ -33,7 +33,16 @@ structure CInfo where
   rg : String.Range
   deriving BEq, Hashable
 
+def keepFromRight {α} (lth : α → Nat) : Nat → List α → List α → List α
+  | 0, _, l
+  | _, _, l@([])
+  | _, [], l => l
+  | n, l::ls, m::ms =>
+    if n < lth l then m::ms else keepFromRight lth (n - lth l) ls ms
+  --| n, h1::t1, _::t2 => h1 :: keepFromRight lth t1 t2
+
 def CInfo.toNewName (c : CInfo) (new : Name) : Name :=
+
   match c.expr.constName! with
   | `Nat.le_refl_deprecated => `Nat.le_refl
   | n => n
