@@ -33,6 +33,11 @@ structure CInfo where
   rg : String.Range
   deriving BEq, Hashable
 
+def CInfo.toNewName (c : CInfo) (new : Name) : Name :=
+  match c.expr.constName! with
+  | `Nat.le_refl_deprecated => `Nat.le_refl
+  | n => n
+
 /-- Sort a set of `CInfo`s by their positions in the file. -/
 def sortCInfos (h : Std.HashSet CInfo) : Array CInfo :=
   h.toArray.qsort (fun a b =>
