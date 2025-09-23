@@ -75,12 +75,13 @@ def getDebts : Syntax → CommandElabM (Array Syntax)
   | .atom .. | .ident .. | .missing => pure #[]
 
 /-
-* Outside of `Mathlib/Deprecated`, count
-  `set_option linter.deprecated false`
 * Outside of `Mathlib/Deprecated`, do not count
   `set_option linter.deprecated false in ... @[deprecated ...]`
-The above is achieved using `cleanUpTechDebt`, except that it currently uses this logic
-in *all* `Mathlib`, not just outside `Mathlib/Deprecated`.
+The above is achieved using `cleanUpTechDebt`; the check for the module name appears directly
+in the linter.
+
+* Outside of `Mathlib/Deprecated`, count
+  `set_option linter.deprecated false`
 
 * Count the lines of
   * `scripts/nolints.json`,
@@ -123,14 +124,15 @@ def techDebtLinterLinter : Linter where run stx := do
     return
   if (← get).messages.hasErrors then
     return
-  match cleanUpTechDebt (← getDebts stx) with
-  | #[] => return
-  | debt =>
+  let modName ← getMainModule
+  let allDebt ← getDebts stx
+  let debt := if modName.components.contains `Deprecated then allDebt else cleanUpTechDebt allDebt
+  if !debt.isEmpty then
     let rg := stx.getRange?.getD default
     -- If the linter is running in `MathlibTest`, then we print the range of the exceptions,
     -- *relative to the start of the syntax*. This makes the tests more stable.
     -- Otherwise, we print the actual range.
-    let offset := if (← getMainModule).components.contains `MathlibTest then rg.start else 0
+    let offset := if modName.components.contains `MathlibTest then rg.start else 0
     Linter.logLint linter.techDebtLinter stx
       m!"Command range: {(rg.start - offset, rg.stop - offset)}.\nDebt size: {debt.size}\n{debt}"
 
