@@ -98,13 +98,7 @@ def techDebtLinterLinter : Linter where run stx := do
     -- If the linter is running in `MathlibTest`, then we print the range of the exceptions,
     -- *relative to the start of the syntax*. This makes the test more stable.
     -- Otherwise, we print the actual range.
-    let offset := (
-      if (← getMainModule).components.contains `MathlibTest
-      then
-        stx.getPos?
-      else
-        some 0
-      ).getD 0
+    let offset := if (← getMainModule).components.contains `MathlibTest then rg.start else 0
     Linter.logLint linter.techDebtLinter stx
       m!"Command range: {(rg.start - offset, rg.stop - offset)}.\nDebt size: {debt.size}\n{debt}"
 
