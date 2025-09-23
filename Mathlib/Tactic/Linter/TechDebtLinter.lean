@@ -79,11 +79,43 @@ def getDebts : Syntax → CommandElabM (Array Syntax)
   `set_option linter.deprecated false`
 * Outside of `Mathlib/Deprecated`, do not count
   `set_option linter.deprecated false in ... @[deprecated ...]`
+The above is achieved using `cleanUpTechDebt`, except that it currently uses this logic
+in *all* `Mathlib`, not just outside `Mathlib/Deprecated`.
+
 * Count the lines of
   * `scripts/nolints.json`,
   * `scripts/nolints_prime_decls.txt`,
   * `**/Deprecated/*.lean`
 -/
+
+/--
+Removes all `set_option linter.deprecated false` and `@[deprecated]` entries from
+`as`, as long as
+* there is at least one `@[deprecated]` attribute present;
+* the innermost `set_option linter.deprecated xxx` present has `xxx = false`.
+
+This is because `set_option linter.deprecated false in @[deprecated] theorem ...`
+should *not* count as technical debt: the deprecated linter is silenced only to allow
+a deprecated declaration to be stated.
+-/
+def cleanUpTechDebt (as : Array Syntax) : Array Syntax := Id.run do
+  let mut cleans := #[]
+  let mut deprecatedLinterOption := #[]
+  let mut deprecatedAttribute := #[]
+  for a in as do
+    if a.isOfKind ``deprecated then
+      deprecatedAttribute := deprecatedAttribute.push a
+    else
+    match a with
+    | `(set_option linter.deprecated $opt) =>
+      if opt.raw.getAtomVal == "false" then
+        deprecatedLinterOption := deprecatedLinterOption.push a
+      else
+        deprecatedLinterOption := #[]
+    | _ => cleans := cleans.push a
+  if deprecatedLinterOption.isEmpty != deprecatedAttribute.isEmpty then
+    cleans := cleans ++ deprecatedLinterOption ++ deprecatedAttribute
+  return cleans
 
 @[inherit_doc Mathlib.Linter.linter.techDebtLinter]
 def techDebtLinterLinter : Linter where run stx := do
@@ -91,7 +123,7 @@ def techDebtLinterLinter : Linter where run stx := do
     return
   if (← get).messages.hasErrors then
     return
-  match ← getDebts stx with
+  match cleanUpTechDebt (← getDebts stx) with
   | #[] => return
   | debt =>
     let rg := stx.getRange?.getD default

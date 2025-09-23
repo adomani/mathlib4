@@ -55,6 +55,49 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 set_option linter.deprecated false in
 @[simp] example : True := trivial
 
+section NestedDeprecation
+/-!
+When both the `linter.deprecated` option is false and the `deprecated` attribute are
+present, then the linter does not report anything.
+-/
+
+set_option linter.deprecated true in
+set_option linter.deprecated false in
+@[deprecated trivial (since := "")] example : True := trivial
+
+set_option linter.deprecated false in
+@[deprecated "" (since := "")] example : True := trivial
+
+/--
+warning: `X` has been deprecated: Use `Nat` instead
+---
+warning: Command range: (0, 118).
+Debt size: 1
+[deprecated "" (since := "")]
+
+Note: This linter can be disabled with `set_option linter.techDebtLinter false`
+-/
+#guard_msgs in
+set_option linter.deprecated false in
+set_option linter.deprecated true in
+@[deprecated "" (since := "")] example := X
+
+#guard_msgs in
+set_option linter.deprecated true in
+set_option linter.deprecated false in
+@[deprecated "" (since := "")] example := X
+
+/--
+warning: `[deprecated]` attribute should specify either a new name or a deprecation message
+---
+warning: `[deprecated]` attribute should specify the date or library version at which the deprecation was introduced, using `(since := "...")`
+-/
+#guard_msgs in
+set_option linter.deprecated false in
+@[deprecated] example : True := trivial
+
+end NestedDeprecation
+
 namespace Fin.NatCast
 def zero := 0
 end Fin.NatCast
