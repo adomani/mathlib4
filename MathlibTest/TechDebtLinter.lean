@@ -1,5 +1,6 @@
 import Batteries.Tactic.Alias
 import Mathlib.Tactic.Linter.TechDebtLinter
+import Mathlib.Tactic.AdaptationNote
 --import Mathlib.adomaniLeanUtils.inspect_syntax
 
 open _root_.Nat hiding add
@@ -13,7 +14,7 @@ example : True := by
  trivial
 
 /--
-warning: Command range: (426, 470).
+warning: Command range: (0, 44).
 Debt size: 1
 [deprecated Nat (since := "")]
 
@@ -23,7 +24,7 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 @[deprecated Nat (since := "")] example := 0
 
 /--
-warning: Command range: (651, 693).
+warning: Command range: (0, 42).
 Debt size: 1
 [deprecated (since := "")]
 
@@ -34,7 +35,7 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 
 
 /--
-warning: Command range: (885, 928).
+warning: Command range: (0, 43).
 Debt size: 1
 [set_option linter.deprecated false]
 
@@ -44,7 +45,7 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 set_option linter.deprecated false in /-!-/
 
 /--
-warning: Command range: (1121, 1192).
+warning: Command range: (0, 71).
 Debt size: 1
 [set_option linter.deprecated false]
 
@@ -59,7 +60,7 @@ def zero := 0
 end Fin.NatCast
 
 /--
-warning: Command range: (1432, 1460).
+warning: Command range: (0, 28).
 Debt size: 1
 [open Fin.NatCast hiding zero]
 
@@ -69,7 +70,7 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 open Fin.NatCast hiding zero
 
 /--
-warning: Command range: (1635, 1651).
+warning: Command range: (0, 16).
 Debt size: 1
 [open Fin.NatCast]
 
@@ -80,7 +81,7 @@ open Fin.NatCast
 
 
 /--
-warning: Command range: (1817, 1878).
+warning: Command range: (0, 61).
 Debt size: 1
 [erw []]
 
@@ -92,7 +93,7 @@ example : 0 = 0 := by
   erw []
 
 /--
-warning: Command range: (2050, 2097).
+warning: Command range: (0, 47).
 Debt size: 1
 [nolint simpNF]
 
@@ -105,7 +106,7 @@ example : True := by
 
 
 /--
-warning: Command range: (2465, 2768).
+warning: Command range: (0, 303).
 Debt size: 5
 [set_option backward.eqns.nonrecursive false,
  set_option backward.dsimp.proofs false,
@@ -124,7 +125,7 @@ set_option maxHeartbeats 100 in -- testing techDebtLinter
 set_option tactic.skipAssignedInstances false in /-!-/
 
 /--
-warning: Command range: (2952, 2974).
+warning: Command range: (0, 22).
 Debt size: 1
 [#adaptation_note /-- -/
  ]
@@ -135,7 +136,7 @@ Note: This linter can be disabled with `set_option linter.techDebtLinter false`
 #adaptation_note /---/
 
 /--
-warning: Command range: (3158, 3213).
+warning: Command range: (0, 55).
 Debt size: 1
 [#adaptation_note /-- -/
  ]
@@ -148,7 +149,7 @@ example : True := by
   trivial
 
 /--
-warning: Command range: (3443, 3516).
+warning: Command range: (0, 73).
 Debt size: 2
 [set_option linter.style.longFile 0, set_option linter.style.longFile 10]
 

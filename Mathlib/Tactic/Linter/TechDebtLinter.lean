@@ -1,5 +1,11 @@
+/-
+Copyright (c) 2025 Damiano Testa. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Damiano Testa
+-/
 import Lean.Elab.Command
-import Mathlib.Tactic.AdaptationNote
+import Batteries.Tactic.Lint.Basic
+
 /-!
 #  The "techDebtLinter" linter
 
@@ -46,7 +52,7 @@ def getDebts : Syntax → CommandElabM (Array Syntax)
         return rargs.push s
       else
         return rargs
-    | ``«tactic#adaptation_note_» | ``adaptationNoteCmd
+    | `«tactic#adaptation_note_» | `adaptationNoteCmd
     | ``Parser.Tactic.tacticErw___
     -- We accumulate `deprecated` attributes, since setting the `linter.deprecated` to `false` for a
     -- `deprecated` declaration should not be counted as technical debt.
@@ -66,9 +72,7 @@ def getDebts : Syntax → CommandElabM (Array Syntax)
         return rargs
     | _ =>
       return rargs
-  | .atom .. => pure #[]
-  | .ident .. => pure #[]
-  | .missing => pure #[]
+  | .atom .. | .ident .. | .missing => pure #[]
 
 /-
 * Outside of `Mathlib/Deprecated`, count
@@ -91,8 +95,18 @@ def techDebtLinterLinter : Linter where run stx := do
   | #[] => return
   | debt =>
     let rg := stx.getRange?.getD default
+    -- If the linter is running in `MathlibTest`, then we print the range of the exceptions,
+    -- *relative to the start of the syntax*. This makes the test more stable.
+    -- Otherwise, we print the actual range.
+    let offset := (
+      if (← getMainModule).components.contains `MathlibTest
+      then
+        stx.getPos?
+      else
+        some 0
+      ).getD 0
     Linter.logLint linter.techDebtLinter stx
-       m!"Command range: {(rg.start, rg.stop)}.\nDebt size: {debt.size}\n{debt}"
+      m!"Command range: {(rg.start - offset, rg.stop - offset)}.\nDebt size: {debt.size}\n{debt}"
 
 initialize addLinter techDebtLinterLinter
 
