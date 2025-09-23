@@ -96,7 +96,7 @@ def techDebtLinterLinter : Linter where run stx := do
   | debt =>
     let rg := stx.getRange?.getD default
     -- If the linter is running in `MathlibTest`, then we print the range of the exceptions,
-    -- *relative to the start of the syntax*. This makes the test more stable.
+    -- *relative to the start of the syntax*. This makes the tests more stable.
     -- Otherwise, we print the actual range.
     let offset := if (← getMainModule).components.contains `MathlibTest then rg.start else 0
     Linter.logLint linter.techDebtLinter stx
