@@ -27,12 +27,15 @@ def printThm (cinfo : ConstantInfo) (bySorry? : Bool) : Meta.MetaM MessageData :
   let declName := cinfo.name
   --let some f := (← getEnv).find? declName | throwError "The constant {declName} should exist..."
   let isProp ← Meta.isProp cinfo.type
-  let cmdTxt := if isProp then "theorem" else "def"
+  let cmdTxt :=
+    if ← Meta.isInstance declName then "instance" else
+      if isProp then "theorem" else "def"
   --if cinfo.value?.isNone then
   --  if (cinfo.value? (allowOpaque := true)).isNone then
   --    logInfo m!"{.ofConstName declName} has not even an opaque value!"
   --  else
   --    logInfo m!"{.ofConstName declName} has no value!"
+  let cmdTxt := (if isNoncomputable (← getEnv) declName then "noncomputable " else "") ++ cmdTxt
   let proof :=
     if isProp && bySorry?
     then
@@ -43,7 +46,7 @@ def printThm (cinfo : ConstantInfo) (bySorry? : Bool) : Meta.MetaM MessageData :
   --let some proof :=
   --  cmd.raw.find? (#[``Parser.Command.declValEqns, ``Parser.Command.declValSimple].contains ·.getKind) |
   --    throwError "Add another kind of proof!"
-
+#check Meta.isInstance
 open Lean Elab Command Mathlib.Command.MinImports in
 elab "cst " cmd:command : command => do
   elabCommand cmd
@@ -68,19 +71,16 @@ elab "cst " cmd:command : command => do
   liftTermElabM do
   let mut msg := #[]
   for (mod, cs) in sorted do
-    --let modIdx := (env.moduleIdxForModule? mod).getD (default)
-    --if modIdx == default then
-    --  dbg_trace "default module index for {mod}!"
-    let dict :=
+    let dict : NameMap _ :=
       if let some modIdx := env.moduleIdxForModule? mod
       then
-        dRanges modIdx
+        Std.TreeMap.ofArray (cmp := Name.quickCmp) <| dRanges modIdx
       else
-        (declRangeExt.getState env).toArray
+        declRangeExt.getState env
     msg := msg.push m!"/- From {mod} -/"
     let cs := cs.qsort fun d1 d2 : ConstantInfo =>
-      match dict.find? (·.1 == d1.name), dict.find? (·.1 == d2.name) with
-      | some (_, r1), some (_, r2) =>
+      match dict.find? d1.name, dict.find? d2.name with
+      | some r1, some r2 =>
         r1.range.pos.line < r2.range.pos.line
       | none, none => dbg_trace "false {(d1.name, d2.name)}"; false
       | _, _ => dbg_trace "false"; false
@@ -157,9 +157,18 @@ class Group.{u} (G : Type u) extends
 --constructor:
 --  Group.mk.{u} {G : Type u} [toDivInvMonoid : DivInvMonoid G] (inv_mul_cancel : ∀ (a : G), a⁻¹ * a = 1) : Group G
 --
+
+#check DivInvMonoid.toMonoid
 #check _root_.Group
 cst
 theorem ga {G} [Group G] {g : G} : g * 1 = g := mul_one g
+
+#check Polynomial.natDegree_add_eq_left_of_degree_lt
+
+cst
+theorem X.{u} {R : Type u} [Semiring R] {p q : Polynomial R}
+    (h : q.degree < p.degree) : (p + q).natDegree = p.natDegree :=
+  Polynomial.natDegree_add_eq_left_of_degree_lt h
 
 #exit
 cst
