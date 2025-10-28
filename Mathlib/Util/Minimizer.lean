@@ -43,23 +43,34 @@ elab "cst " cmd:command : command => do
   --  cmd.raw.find? (·.isOfKind ``Parser.Command.declId) | throwError "No declaration id!"
   let declName ← resolveGlobalConstNoOverload id
   let csts ← getAllDependencies cmd id
-  let cstsAndMods : NameMap (Array Name)  ← csts.foldlM (init := ∅) fun tot decl => do
+  let cstsAndMods : NameMap (Array ConstantInfo)  ← csts.foldlM (init := ∅) fun tot decl => do
     if decl.isInternalDetail then return tot
-    if (env.find? decl).isNone then return tot
+    let some cinfo := env.find? decl | return tot
     let mod := (← findModuleOf? decl).getD (← getMainModule)
-    return tot.alter mod (·.getD #[] |>.push decl)
+    if mod.getRoot != `Mathlib then return tot
+    return tot.alter mod (·.getD #[] |>.push cinfo)
     --_
   let sorted := cstsAndMods.toArray.qsort (importLT env ·.1 ·.1)
+  let dRanges := declRangeExt.getModuleEntries env
+  --dbg_trace (dRanges.find? `Mathlib.Command.MinImports.getDeclName).map (·.range.pos)
+  --if false then
   let mut msg := #[]
   for (mod, cs) in sorted do
-    msg := msg.push m!"** {mod}"
-    for c in cs do
-      if c.isInternalDetail then continue
-      let some cinfo := env.find? c | continue
-      let mod := (← findModuleOf? c).getD (← getMainModule)
-      if mod.getRoot == `Mathlib then
+    let modIdx := (env.moduleIdxForModule? mod).getD default
+    let dict := dRanges modIdx
+    msg := msg.push m!"/- From {mod} -/"
+    let cs := cs.qsort fun d1 d2 : ConstantInfo =>
+      match dict.find? (·.1 == d1.name), dict.find? (·.1 == d2.name) with
+      | some (_, r1), some (_, r2) =>
+        r1.range.pos.line < r2.range.pos.line
+      | _, _ => dbg_trace "false"; false
+    for cinfo in cs do
+      --if c.isInternalDetail then continue
+      --let some cinfo := env.find? c | continue
+      --let mod := (← findModuleOf? c).getD (← getMainModule)
+      --if mod.getRoot == `Mathlib then
       --if c == `X.F then dbg_trace "found in {mod}"
-        msg := msg.push m!"In {mod}" |>.push (← liftTermElabM <| printThm cinfo (c != declName)) |>.push ""
+      msg := msg.push (← liftTermElabM <| printThm cinfo (cinfo.name != declName)) |>.push ""
       --logInfo <| ← liftTermElabM <| printThm declName true
   logInfo <| m!"\n".joinSep msg.toList
 /-
