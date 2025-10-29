@@ -24,11 +24,13 @@ def importLT (env : Environment) (f1 f2 : Name) : Bool :=
 
 open Lean Elab Command Mathlib.Command.MinImports in
 def printThm (cinfo : ConstantInfo) (bySorry? : Bool) : Meta.MetaM MessageData := do
+  let env ← getEnv
   let declName := cinfo.name
   --let some f := (← getEnv).find? declName | throwError "The constant {declName} should exist..."
   let isProp ← Meta.isProp cinfo.type
   let cmdTxt :=
-    if ← Meta.isInstance declName then "instance" else
+      if ← Meta.isInstance declName then "instance" else
+      if isClass env declName then "class" else
       if isProp then "theorem" else "def"
   --if cinfo.value?.isNone then
   --  if (cinfo.value? (allowOpaque := true)).isNone then
@@ -158,6 +160,8 @@ class Group.{u} (G : Type u) extends
 --  Group.mk.{u} {G : Type u} [toDivInvMonoid : DivInvMonoid G] (inv_mul_cancel : ∀ (a : G), a⁻¹ * a = 1) : Group G
 --
 
+#check isClass
+--#exit
 #check DivInvMonoid.toMonoid
 #check _root_.Group
 cst
@@ -165,10 +169,16 @@ theorem ga {G} [Group G] {g : G} : g * 1 = g := mul_one g
 
 #check Polynomial.natDegree_add_eq_left_of_degree_lt
 
-cst
+--cst
 theorem X.{u} {R : Type u} [Semiring R] {p q : Polynomial R}
     (h : q.degree < p.degree) : (p + q).natDegree = p.natDegree :=
   Polynomial.natDegree_add_eq_left_of_degree_lt h
+
+
+#check Lean.isStructure
+run_cmd
+  let s := Lean.getStructureInfo (← getEnv) ``_root_.Field
+  dbg_trace s.fieldInfo.map fun p => (p.fieldName)
 
 #exit
 cst
