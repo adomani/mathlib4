@@ -169,6 +169,17 @@ theorem ga {G} [Group G] {g : G} : g * 1 = g := mul_one g
 
 #check Polynomial.natDegree_add_eq_left_of_degree_lt
 
+notation "orez" => Nat.zero
+
+set_option pp.analyze true in
+cst
+def J : Nat := orez
+
+set_option pp.analyze true in
+cst
+def J' : Nat := J
+
+set_option pp.analyze true in
 --cst
 theorem X.{u} {R : Type u} [Semiring R] {p q : Polynomial R}
     (h : q.degree < p.degree) : (p + q).natDegree = p.natDegree :=
