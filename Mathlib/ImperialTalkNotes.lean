@@ -1,7 +1,7 @@
 import Mathlib.Tactic.TacticAnalysis
 
 /-
-Notes
+# General outline
 
 * `Config` takes `ContextInfo`s and `TacticInfo` and performs some
   `CommandElabM` computation.
@@ -29,4 +29,7 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 * Finally, the linter executes `runPasses` on every command.
 
+# Helper for creating `Config`s
+
+# Some `Config`s (in the `Declarations` file)
 -/
