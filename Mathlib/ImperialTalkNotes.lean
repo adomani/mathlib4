@@ -1,3 +1,4 @@
+import Mathlib.Tactic.AdaptationNote
 import Mathlib.Tactic.TacticAnalysis
 import Mathlib.Tactic.TacticAnalysis.Declarations
 import Mathlib.adomaniLeanUtils.inspect_syntax
@@ -129,7 +130,17 @@ Hence, this can be used to verify that a tactic is "increasing" its scope (mostl
 or seeing if one can be phased out, since one or more other tactics might take its place
 (for instance, replacing `omega` by `cutsat`).
 
+There are a few more `Config`s that are easy to interpret.
+
+* `rwMerge` isolates (maximal) chains length at least 2 of consecutive `rw`s and tries to merge
+  them into a single `rw` that closes the goal.
+
+* `mergeWithGrind` tries to merge a (maximal) pair `tac; grind` with `grind` alone,
+  assuming that it still closes the goal.
+
+  I wonder whether the merging only maximal chains of length 2 is intended.
 -/
+
 variable (nnn : Nat)
 
 
