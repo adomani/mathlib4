@@ -115,6 +115,20 @@ and it adds the `Config` to which the attribute was added with the input option.
       ```
   The rest of the reporting is pretty straightforward.
 
+After this, the file starts defining various `Config`s using the tools developped so far.
+Several involve replacing a terminal tactic with another, e.g.
+* `linarithToGrind`,
+* `ringToGrind`,
+* `omegaToCutsat`.
+
+These can be seen as either
+* "regressions", if reporting a failure to replace say `linarith` by `grind`; or
+* "golfs", if reporting a success to replace `omega` by `cutsat`.
+
+Hence, this can be used to verify that a tactic is "increasing" its scope (mostly `grind`),
+or seeing if one can be phased out, since one or more other tactics might take its place
+(for instance, replacing `omega` by `cutsat`).
+
 -/
 variable (nnn : Nat)
 
