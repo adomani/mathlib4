@@ -27,7 +27,7 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 * `runPasses` simply executes the code in each input `Pass` on the given `InfoTree`s.
 
-* Finally, the linter executes `runPasses` on every command.
+* Finally, the `tacticAnalysis` linter executes `runPasses` on every command.
 
 # Helper for creating `Config`s
 
