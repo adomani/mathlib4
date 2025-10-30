@@ -62,6 +62,11 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 # Some `Config`s (in the `Declarations` file)
 
+* `TerminalReplacementOutcome` is a custom type for recording the outcome of a `test`.
+  It always contains a `tactic` and
+  * if the outcome is `success`, then nothing else;
+  * if the outcome is `remainingGoals`, then a list of goals as `MessageData`;
+  * if the outcome is `error`, then a single `MessageData`.
 
 -/
 variable (nnn : Nat)
