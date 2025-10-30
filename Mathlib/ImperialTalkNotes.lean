@@ -38,10 +38,12 @@ and it adds the `Config` to which the attribute was added with the input option.
 * `TriggerCondition` is used to select sublists of tactics on which to run the tests.
   It has three modes:
   * `skip` means discard all tactics in the list so far and move on to the next one;
-  * `continue` means to accumulate the current tactic, but do not test yet and check if the current sublist should grow more;
+  * `continue` means to accumulate the current tactic, but do not test yet and check if the current
+    sublist should grow more;
   * `accept` means stop accumulating and execute the tests.
 
-  The `continue` and `accept` modes also contain a `context` to potentially propagate information about the accumulation of tactics.
+  The `continue` and `accept` modes also contain a `context` to potentially propagate information
+  about the accumulation of tactics.
 
 * `ComplexConfig` has 3 main components: `trigger`, `test` and `tell`.
   These are the phases of the framework:
@@ -49,7 +51,8 @@ and it adds the `Config` to which the attribute was added with the input option.
   * `test` runs some `MetaM` code on the selected tactics;
   * `tell` reports a `CommandElabM` conclusion of `test`.
 
-  Among the information that the various pieces pass around, the analysis also records the number of `heartbeats`.
+  Among the information that the various pieces pass around, the analysis also records the number
+  of `heartbeats`.
 
 * `testTacticSeq` assumes that the input `tacticSeq` has been selected by the `trigger` and
   * runs the `test` on it;
