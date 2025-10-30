@@ -162,3 +162,27 @@ inspect #check nnn.succ
 open Lean.Elab
 inspectIT #check Nat.succ
 inspectIT #check nnn.succ
+
+set_option linter.unusedTactic false
+set_option linter.style.multiGoal false
+
+set_option linter.tacticAnalysis.mergeWithGrind true
+example : 0 = 0 := by
+  intros
+  intros
+  intros
+  intros
+  intros
+  grind
+set_option linter.tacticAnalysis.mergeWithGrind false
+
+
+set_option linter.tacticAnalysis.terminalToGrind true
+example : 0 = 0 := by
+  intros
+  intros
+  intros
+  intros
+  intros
+  rfl
+set_option linter.tacticAnalysis.terminalToGrind false
