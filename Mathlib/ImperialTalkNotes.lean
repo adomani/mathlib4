@@ -62,11 +62,41 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 # Some `Config`s (in the `Declarations` file)
 
-* `TerminalReplacementOutcome` is a custom type for recording the outcome of a `test`.
+* `TerminalReplacementOutcome` is a custom type for recording the outcome of a `test` in the
+  `terminalReplacement` setting.
   It always contains a `tactic` and
   * if the outcome is `success`, then nothing else;
   * if the outcome is `remainingGoals`, then a list of goals as `MessageData`;
   * if the outcome is `error`, then a single `MessageData`.
+
+* `terminalReplacement` produces a `Config` using the `ofComplex` setting in the case of replacing
+  a terminal tactic with another.
+  The inputs are
+
+  * `oldTacticName` and `newTacticName` -- human-readable names for either
+    individual tactics (such as `linarith`), or
+    families of tactics (such as `ring`, including `ring_nf`, `ring1`, and so on).
+    These are helpful for reporting, but have no bearing to what the tactics really are.
+
+  * `newTactic stx goal` produces the new tactic as a (`MetaM`-)function of
+    the old tactic `stx` to be replaced, and
+    the current `goal` (passed as an `MVarId`).
+
+  * `oldTacticKind`, the `SyntaxNodeKind` that triggers the replacement
+    (e.g. `Mathlib.Tactic.linarith` for `linarith).
+
+  * `reportFailure`, `reportSuccess` and `reportSlowdown` -- `Bool`ean flags for whether or not to
+    report in the case of failure, success and slowdown.
+
+  *  `maxSlowdown` -- a threshold for what to consider an acceptable slowdown.
+
+  Here is a summary of what the code does.
+
+  * The output type is `TerminalReplacementOutcome` and
+    the context that is passed around is a `Syntax`.
+
+  * The `trigger` only `accept`s tactics with `SyntaxNodeKind` the input `oldTacticKind` and
+    `skip`s everything else.
 
 -/
 variable (nnn : Nat)
