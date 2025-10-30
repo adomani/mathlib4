@@ -47,7 +47,13 @@ and it adds the `Config` to which the attribute was added with the input option.
 
   Among the information that the various pieces pass around, the analysis also records the number of `heartbeats`.
 
-* `testTacticSeq`
+* `testTacticSeq` assumes that the input `tacticSeq` has been selected by the `trigger` and
+  * runs the `test` on it;
+  * reports the corresponding `tell`.
+
+* `runPass` puts it all together:
+  * select the sublists of tactics using `trigger`;
+  * run `testTacticSeq` on the selected tactics.
 
 # Some `Config`s (in the `Declarations` file)
 -/
