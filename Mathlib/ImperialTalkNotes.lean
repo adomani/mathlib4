@@ -88,7 +88,9 @@ and it adds the `Config` to which the attribute was added with the input option.
   * `reportFailure`, `reportSuccess` and `reportSlowdown` -- `Bool`ean flags for whether or not to
     report in the case of failure, success and slowdown.
 
-  *  `maxSlowdown` -- a threshold for what to consider an acceptable slowdown.
+  * `maxSlowdown` -- a threshold for what to consider an acceptable slowdown.
+    This is a ratio, rather than an absolute value, and it defaults to `1`, which means that
+    no slowdown is allowed.
 
   Here is a summary of what the code does.
 
@@ -97,6 +99,21 @@ and it adds the `Config` to which the attribute was added with the input option.
 
   * The `trigger` only `accept`s tactics with `SyntaxNodeKind` the input `oldTacticKind` and
     `skip`s everything else.
+
+  * The `test` runs the tactic `tac` specified by `newTactic stx goal` and reports
+    * a `success tac` if the goal is closed;
+    * a `.remainingGoals tac [list of MessageData-expressions for the left-over goals]`;
+    * a `.error tac msg`, where `msg` is a MessageData containing a standalone Lean file of the form
+      ```lean4
+      import xxx
+      ...
+      import zzz
+
+      theorem extracted ... := by
+        fail_if_success tac
+        stx
+      ```
+  The rest of the reporting is pretty straightforward.
 
 -/
 variable (nnn : Nat)
