@@ -58,4 +58,6 @@ and it adds the `Config` to which the attribute was added with the input option.
 * `Config.ofComplex` simply uses the code in a `ComplexConfig` as a `Config`.
 
 # Some `Config`s (in the `Declarations` file)
+
+
 -/
