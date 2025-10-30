@@ -142,6 +142,16 @@ There are a few more `Config`s that are easy to interpret.
   assuming that it still closes the goal.
 
   I wonder whether the merging only maximal chains of length 2 is intended.
+
+* `terminalToGrind` is similar, except that it tries to replace "tails" of tactics by `grind`,
+  regardless of whether the tail already ended with `grind` or not.
+
+* `tryAtEachStep` is another "`Config`-template": it simply tries to insert a tactic at all
+  places and checks whether it closes the goal.
+  `grind`, `simp_all`, `aesop` and `grind +premises` are all individually defined using
+  `tryAtEachStep`.
+
+* `introMerge` does what is expected: merge consecutive uses of `intro`.
 -/
 
 variable (nnn : Nat)
