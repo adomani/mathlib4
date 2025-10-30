@@ -1,4 +1,6 @@
 import Mathlib.Tactic.TacticAnalysis
+import Mathlib.adomaniLeanUtils.inspect_syntax
+import Mathlib.adomaniLeanUtils.inspect_infotree
 
 /-
 # General outline
@@ -61,3 +63,11 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 
 -/
+variable (nnn : Nat)
+
+
+inspect #check Nat.succ
+inspect #check nnn.succ
+open Lean.Elab
+inspectIT #check Nat.succ
+inspectIT #check nnn.succ
