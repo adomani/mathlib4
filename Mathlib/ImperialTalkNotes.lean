@@ -31,5 +31,15 @@ and it adds the `Config` to which the attribute was added with the input option.
 
 # Helper for creating `Config`s
 
+* `TriggerCondition` is used to select sublists of tactics on which to run the tests.
+  It has three modes:
+  * `skip` means discard all tactics in the list so far and move on to the next one;
+  * `continue` means to accumulate the current tactic, but do not test yet and check if the current sublist should grow more;
+  * `accept` means stop accumulating and execute the tests.
+
+  The `continue` and `accept` modes also contain a `context` to potentially propagate information about the accumulation of tactics.
+
+* `ComplexConfig`
+
 # Some `Config`s (in the `Declarations` file)
 -/
