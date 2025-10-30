@@ -39,7 +39,15 @@ and it adds the `Config` to which the attribute was added with the input option.
 
   The `continue` and `accept` modes also contain a `context` to potentially propagate information about the accumulation of tactics.
 
-* `ComplexConfig`
+* `ComplexConfig` has 3 main components: `trigger`, `test` and `tell`.
+  These are the phases of the framework:
+  * `trigger` selects the tactics to analyze;
+  * `test` runs some `MetaM` code on the selected tactics;
+  * `tell` reports a `CommandElabM` conclusion of `test`.
+
+  Among the information that the various pieces pass around, the analysis also records the number of `heartbeats`.
+
+* `testTacticSeq`
 
 # Some `Config`s (in the `Declarations` file)
 -/
