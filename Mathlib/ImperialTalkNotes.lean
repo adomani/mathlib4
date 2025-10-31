@@ -166,18 +166,23 @@ inspectIT #check nnn.succ
 set_option linter.unusedTactic false
 set_option linter.style.multiGoal false
 
-set_option linter.tacticAnalysis.mergeWithGrind true
+set_option linter.tacticAnalysis.mergeWithGrind true in
 example : 0 = 0 := by
+  have : 0 = 0 := by
+    intros
+    intros
+    intros
+    intros
+    intros
+    grind
   intros
   intros
   intros
   intros
   intros
   grind
-set_option linter.tacticAnalysis.mergeWithGrind false
 
-
-set_option linter.tacticAnalysis.terminalToGrind true
+set_option linter.tacticAnalysis.terminalToGrind true in
 example : 0 = 0 := by
   intros
   intros
@@ -185,4 +190,3 @@ example : 0 = 0 := by
   intros
   intros
   rfl
-set_option linter.tacticAnalysis.terminalToGrind false
