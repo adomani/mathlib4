@@ -9,9 +9,10 @@ import Mathlib.adomaniLeanUtils.inspect_infotree
 
 * `Config` takes `ContextInfo`s and `TacticInfo` and performs some
   `CommandElabM` computation.
-
+  ```
   structure Config where
     run : Array (ContextInfo × TacticInfo) → CommandElabM Unit
+  ```
 
 * `Pass` extends `Config` and also links it to an (optional) option.
 
