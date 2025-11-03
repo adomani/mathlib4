@@ -1,12 +1,9 @@
-import Mathlib.Tactic.Linter.UnusedTactic
 import Mathlib.Tactic.TacticAnalysis
 import Mathlib.Tactic.TacticAnalysis.Declarations
 import Mathlib.adomaniLeanUtils.inspect_syntax
 import Mathlib.adomaniLeanUtils.inspect_infotree
 
 open Lean Elab Command
-
-set_option linter.unusedTactic false
 
 set_option linter.tacticAnalysis.mergeWithGrind true in
 example : 0 = 0 := by
