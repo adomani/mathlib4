@@ -156,7 +156,11 @@ For instance at a `TacticInfo` node, we can find information about
 * which elaborator handled the corresponding `Syntax`;
 * the metavariable contexts before and after the tactic is evaluated;
 * the list of goals before and after the tactic is evaluated.
+-/
 
+#print TacticInfo
+
+/-!
 In turn, the metavariable contexts contain information about the types of each goals,
 their universe levels, which relationships there are between all the metavariables that have been
 created so far, local contexts and so on.
@@ -169,6 +173,11 @@ The main difference is that the data contained in `InfoTree`s tends to be "local
 of what is available at a particular moment.
 A `ContextInfo` is more "global": it links the information that was available *before* the command
 was elaborated to the specific modifications that happened in the course of elaboration.
+-/
+
+#print ContextInfo
+
+/-!
 
 For instance, the `Environment` and the whole content of the file is contained in a `ContextInfo`.
 Also, which `option`s are set, what is the current `namespace` and what namespaces are `open`
