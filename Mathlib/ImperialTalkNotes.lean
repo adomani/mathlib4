@@ -223,6 +223,10 @@ example : 0 = 0 := by
 ss
 example : 0 = 0 := by
   intros
+  have := by
+    skip
+    intros
+    exact 1
   skip
   have := 0
   rfl
