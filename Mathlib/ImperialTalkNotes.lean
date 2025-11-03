@@ -1,4 +1,4 @@
-import Mathlib.Tactic.AdaptationNote
+import Mathlib.Tactic.Linter.UnusedTactic
 import Mathlib.Tactic.TacticAnalysis
 import Mathlib.Tactic.TacticAnalysis.Declarations
 import Mathlib.adomaniLeanUtils.inspect_syntax
@@ -32,6 +32,16 @@ example : 0 = 0 := by
   intros
   intros
   rfl
+
+set_option linter.tacticAnalysis.rwMerge true in
+example : 0 = 0 := by
+  rw []
+  rw []
+
+set_option linter.tacticAnalysis.rwMerge true in
+example (a b : Nat) : a + b + 0 = b + a := by
+  rw [Nat.add_zero]
+  rw [Nat.add_comm]
 
 namespace Talk
 /-!
