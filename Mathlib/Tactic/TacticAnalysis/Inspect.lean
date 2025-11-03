@@ -100,30 +100,7 @@ def Array.display {α} [ToString α] (a : Array α) (sep : String := "\n  ") : S
   if a.isEmpty then "∅" else
   sep.intercalate (""::(a.map (s!"{·}")).toList)
 
-namespace Lean
-
-def MetavarContext.toString (m : MetavarContext) : MetaM MessageData := do
-  let depth := m.depth
-  let levelAssignDepth := m.levelAssignDepth
-  let mvarCounter := m.mvarCounter
-  let decls := m.decls.toArray
-  let userNames := m.userNames.toArray
-  let eAssignment := m.eAssignment.toArray
-  let dAssignment := m.dAssignment.toArray
-  return m!"\
-{.ofConstName ``depth}: {depth}
-{.ofConstName ``levelAssignDepth}: {levelAssignDepth}
-{.ofConstName ``mvarCounter}: {mvarCounter}\n" ++
-m!"{.ofConstName ``decls}: \
-  {(← decls.mapM fun (mvarid, mdecl) =>
-    Meta.withLCtx mdecl.lctx mdecl.localInstances
-      (pure (mvarid.name, mdecl.userName, mdecl.type, mdecl.lctx.fvarIdToDecl.toArray.map fun (fv, ld) => (fv.name, ld.userName)))).display}
-{.ofConstName ``userNames}: {(userNames.map fun (nm, mv) => (nm, mv.name)).display}\n" ++
-m!"{.ofConstName ``eAssignment}: {(eAssignment.map fun (m, e) => (m.name, e)).display}
-{.ofConstName ``dAssignment}: {dAssignment.map fun (m, e) => s!"({m.name}, {(e.fvars, e.mvarIdPending.name)})"}
-"
-
-namespace Elab
+namespace Lean.Elab
 
 /-- Printing out a `CompletionInfo`. -/
 def CompletionInfo.ctor : CompletionInfo → MessageData
@@ -145,9 +122,7 @@ def ContextInfo.toMessageData : (pci : ContextInfo) → MetaM MessageData
 /-- Printing out a `Info`. -/
 def Info.toMessageData : Info → MetaM MessageData
   | .ofTacticInfo ti         =>
-    return m!"{.ofConstName ``ofTacticInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}\n\
-    BEFORE {showStx ti.stx}\n{← ti.mctxBefore.toString}\n\
-    AFTER {showStx ti.stx}\n{← ti.mctxAfter.toString}\n"
+    return m!"{.ofConstName ``ofTacticInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}"
   | .ofTermInfo ti           => do
     return m!"{.ofConstName ``ofTermInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}, {ti.expr}"
   | .ofPartialTermInfo ti    =>
@@ -183,8 +158,7 @@ def Info.toMessageData : Info → MetaM MessageData
     return m!"{.ofConstName ``ofErrorNameInfo}: {i.errorName} {showStx i.stx}"
 
 def PartialContextInfo.toMessageData : PartialContextInfo → MetaM MessageData
-  | commandCtx _ci =>
-    return m!"{.ofConstName ``commandCtx}"
+  | commandCtx _ci => return m!"{.ofConstName ``commandCtx}"
   | parentDeclCtx parentDecl => return m!"parentDeclCtx {.ofConstName parentDecl}"
   | autoImplicitCtx .. => default
 
