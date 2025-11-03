@@ -4,10 +4,9 @@ import Mathlib.Tactic.TacticAnalysis.Declarations
 import Mathlib.adomaniLeanUtils.inspect_syntax
 import Mathlib.adomaniLeanUtils.inspect_infotree
 
-open Lean.Elab
+open Lean Elab Command
 
 set_option linter.unusedTactic false
-set_option linter.style.multiGoal false
 
 set_option linter.tacticAnalysis.mergeWithGrind true in
 example : 0 = 0 := by
@@ -33,49 +32,6 @@ example : 0 = 0 := by
   intros
   intros
   rfl
-
-open Lean Elab Command
-def spell (ns : Parser.SyntaxNodeKindSet) : Syntax → CommandElabM Unit
-  | s@(.node i k args) => do
-    if ns.contains k then logInfoAt s k
-    let _ ← args.mapM (spell ns)
-  | _ => return default
-
-elab "ss " cmd:command : command => do
-  elabCommand cmd
---  let parserCats ← Parser.builtinParserCategoriesRef.get
---  logInfo m!"{parserCats.toArray.map (·.1)}"
---  logInfo m!"{parserCats.toArray.map fun cat => (cat.1, ((parserCats.find? cat.1)).toArray.map (·.kinds.toArray.map (m!"{.ofConstName ·.1}")))}"
---  let tactics := parserCats.find? `tactic
-  let cats := (Parser.parserExtension.getState (← getEnv)).categories
-  let some tactics := Parser.ParserCategory.kinds <$> cats.find? `tactic
-    | return
-  -- Do not forget about `conv`
-  logInfo m!"{tactics.toArray.map (m!"{.ofConstName ·.1}")}"
-  spell tactics cmd
-  --logInfo m!"{tactics.map (·.kinds.toArray)}"
-
-inspect
-example : 0 = 0 := by
-  intros
-  skip
-  have := 0
-  rfl
-#check Batteries.Tactic.unreachable
-ss
-example : 0 = 0 := by
-  intros
-  have := by
-    skip
-    intros
-    exact 1
-  skip
-  have := 0
-  rfl
-
-#check Lean.Parser.Tactic.open
-#check Lean.Parser.Tactic.match
-#check Lean.Parser.Tactic.unknown
 
 namespace Talk
 /-!
