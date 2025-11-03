@@ -65,13 +65,6 @@ inductive Syntax where
 --inspect #check Nat
 --inspect section
 
-run_cmd
-  let h := mkIdent `hello
-  let stx ← `(#check $h .succ)
-  let stx ← `(dite cond (fun h => t) (fun h => t))
-  let stx ← `(infixl:25 " ≃* " => MulEquiv)
-  logInfo (InspectSyntax.toMessageData stx)
-
 /-!
 ## Elaboration
 Once Lean produced a valid `Syntax` term, it next `elaborates` it.
