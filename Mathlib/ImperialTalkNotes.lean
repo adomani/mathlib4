@@ -1,7 +1,6 @@
 import Mathlib.Tactic.TacticAnalysis
 import Mathlib.Tactic.TacticAnalysis.Declarations
-import Mathlib.adomaniLeanUtils.inspect_syntax
-import Mathlib.adomaniLeanUtils.inspect_infotree
+import Mathlib.Tactic.TacticAnalysis.Inspect
 
 open Lean Elab Command
 
