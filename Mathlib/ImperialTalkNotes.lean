@@ -377,6 +377,23 @@ There are a few more `Config`s that are easy to interpret.
   `tryAtEachStep`.
 
 * `introMerge` does what is expected: merge consecutive uses of `intro`.
+
+# Future work and todos
+
+* `findTacticSeqs` does not actually do what it says.
+  I consider this to be a bug and it should be fixed!
+
+* It would be interesting to allow functions such as `rwMerge` to try to merge *subsets* of
+  consecutive `rw`s, instead of "all or nothing".
+
+* Right now, the `tacticAnalysis` framework does not have "global" awareness:
+  it can evaluate a tactic "locally", but it cannot figure out whether the result of that evaluation
+  will produce a globally valid command.
+
+* Besides inspecting tactics, it would also be useful to inspect all commands in general.
+
+* Ideally, this should all be linked to automated modifications of the source code, so that running
+  the framework also has the option of self-correcting/self-improving the source.
 -/
 
 end Talk
