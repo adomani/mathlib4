@@ -3,18 +3,107 @@ open Lean
 
 namespace AdomaniUtils
 
-/-- The brackets corresponding to a given `BinderInfo`. Copied from `Mathlib.Lean.Expr.Basic`. -/
-def bracks : BinderInfo → String × String
-  | .implicit       => ("{", "}")
-  | .strictImplicit => ("{{", "}}")
-  | .instImplicit   => ("[", "]")
-  | _               => ("(", ")")
+partial
+def printMe {α} (printNode : α → MessageData) (recurse : α → Option (Array α)) (a : α) :
+    MessageData :=
+  let recs : Option (Array MessageData) := (recurse a).map (·.map (printMe printNode recurse))
+  let msgs := #[printNode a] ++ recs.getD #[]
+  m!"\n".joinSep msgs.toList
+
+partial
+def treeR {α} (printNode : α → MessageData) (recurse : α → Array α) (stx : α)
+    (sep : MessageData := "\n") (indent : MessageData := "  ") :
+    MessageData :=
+  let (msg, es) := (printNode stx, recurse stx)
+  let mes := es.map (treeR (sep := sep ++ indent) (indent := indent) printNode recurse)
+  mes.foldl (fun x y => (x.compose sep).compose ((m!"|-").compose y)) msg
 
 /-- replaces line breaks with the literal string `⟨['\', 'n']⟩`
 for better formatting of syntax that includes line breaks.
 -/
 def rmLB (s : String) : String :=
   s.replace "\n" "⏎"
+
+
+def Nat.recurse : Nat → Array Nat
+  | 0 => #[]
+  | n + 1 => #[n]
+
+def Nat.printNode : Nat → MessageData
+  | 0 => m!"0"
+  | n + 1 => m!"s (really {n + 1})"
+
+/-- Print out a `SourceInfo`. -/
+def si : SourceInfo → MessageData
+  | .original leading _pos trailing _endPos =>
+    m!"{.ofConstName ``SourceInfo.original}: ⟨{rmLB leading.toString}⟩⟨{rmLB trailing.toString}⟩"
+  | .synthetic _pos _endPos canonical => m!"{.ofConstName ``SourceInfo.synthetic} {canonical}"
+  | .none => m!"{.ofConstName ``SourceInfo.none}"
+
+def Syntax.recurse : Syntax → Option (Array Syntax)
+  | .node _ _ args => args
+  | _ => some #[]
+
+def Syntax.printNode : Syntax → MessageData
+  | .node info kind .. => m!"{.ofConstName ``Syntax.node} {.ofConstName kind}, {si info}"
+  | .atom info val => m!"{.ofConstName ``Syntax.atom} {si info}-- '{val}'"
+  | .ident info rawVal val .. => m!"{.ofConstName ``Syntax.ident} {si info}-- ({rawVal},{val.eraseMacroScopes})"
+  | .missing => m!"{.ofConstName ``Syntax.missing}"
+
+
+/--
+info: s (really 5)
+|-s (really 4)
+  |-s (really 3)
+    |-s (really 2)
+      |-s (really 1)
+        |-0
+---
+info: s (really 5)
+|-s (really 4)
+|   |-s (really 3)
+|   |   |-s (really 2)
+|   |   |   |-s (really 1)
+|   |   |   |   |-0
+---
+info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
+|-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+    |-Syntax.atom SourceInfo.synthetic false-- 'meta'
+|-Syntax.atom SourceInfo.synthetic false-- 'section'
+|-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello)
+---
+info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
+|-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| | |-Syntax.atom SourceInfo.synthetic false-- 'meta'
+|-Syntax.atom SourceInfo.synthetic false-- 'section'
+|-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello)
+-/
+#guard_msgs in
+#eval do
+  let n := 5
+  let stx ← `(meta section Hello)
+--  logInfo <| printMe Nat.printNode  Nat.recurse    n
+  logInfo <| treeR Nat.printNode    Nat.recurse    n
+  logInfo <| treeR Nat.printNode    Nat.recurse    n   (indent := "|   ")
+  logInfo <| treeR Syntax.printNode Syntax.getArgs stx
+  logInfo <| treeR Syntax.printNode Syntax.getArgs stx (indent := "| ")
+
+/-- The brackets corresponding to a given `BinderInfo`. Copied from `Mathlib.Lean.Expr.Basic`. -/
+def bracks : BinderInfo → String × String
+  | .implicit       => ("{", "}")
+  | .strictImplicit => ("{{", "}}")
+  | .instImplicit   => ("[", "]")
+  | _               => ("(", ")")
 
 #eval show Elab.Term.TermElabM _ from do
   guard ("hi⏎⏎" == rmLB "hi\n
@@ -44,37 +133,12 @@ namespace InspectSyntax
 
 open AdomaniUtils Lean Elab Tactic
 
-/-- Print out a `SourceInfo`. -/
-def si : SourceInfo → MessageData
-  | .original leading _pos trailing _endPos =>
-    m!"original: ⟨{rmLB leading.toString}⟩⟨{rmLB trailing.toString}⟩"
-  | .synthetic _pos _endPos canonical => m!"synthetic {canonical}"
-  | .none => "none"
-
-/--
-`treeM stx` takes a `Syntax` and returns a pair consisting of
-* `MessageData` for the non-`Syntax` arguments of `stx`,
-* an array of the `Syntax` children of `stx`.
--/
-def treeM : Syntax → MessageData × Array Syntax
-  | .missing                 => default
-  | .node info kind args     => (m!"node {.ofConstName kind}, {si info}", args)
-  | .atom info val           => (m!"atom {si info}-- '{val}'", #[])
-  | .ident info rawVal val _ => (m!"ident {si info}-- ({val},{rawVal.toString})", #[])
-
-/-- `treeR ex` recursively formats the output of `treeM`. -/
-partial
-def treeR (stx : Syntax) (indent : MessageData := "\n") (sep : MessageData := "  ") :
-    MessageData :=
-  let (msg, es) := treeM stx
-  let mes := es.map (treeR (indent := indent ++ sep) (sep := sep))
-  mes.foldl (fun x y => (x.compose indent).compose ((m!"|-").compose y)) msg
-
 /--
 `viewTreeWithBars stx` is the default formatting of the output of `treeR stx` that
 uses `| ` to separate nodes.
 -/
-def toMessageData (stx : Syntax) : MessageData := treeR stx (sep := "|   ")
+def toMessageData (stx : Syntax) : MessageData :=
+  treeR Syntax.printNode Syntax.getArgs stx (indent := "|   ")
 
 /--
 `inspect cmd` displays the tree structure of the `Syntax` of the command `cmd`.
@@ -91,6 +155,112 @@ elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
   evalTactic tacs
 
 end InspectSyntax
+open Syntax
+/--
+info: inspect:
+---
+/-- I am a doc-string -/
+@[simp, grind =]
+private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by apply Int.add_comm
+---
+
+node Parser.Command.declaration, SourceInfo.none
+|-node Parser.Command.declModifiers, SourceInfo.none
+|   |-node null, SourceInfo.none
+|   |   |-node Parser.Command.docComment, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '/--'
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- 'I am a doc-string -/'
+|   |-node null, SourceInfo.none
+|   |   |-node Parser.Term.attributes, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '@['
+|   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-node Parser.Term.attrInstance, SourceInfo.none
+|   |   |   |   |   |-node Parser.Term.attrKind, SourceInfo.none
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-node Parser.Attr.simp, SourceInfo.none
+|   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- 'simp'
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ','
+|   |   |   |   |-node Parser.Term.attrInstance, SourceInfo.none
+|   |   |   |   |   |-node Parser.Term.attrKind, SourceInfo.none
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-node Parser.Attr.grind, SourceInfo.none
+|   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'grind'
+|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |   |-node Parser.Attr.grindMod, SourceInfo.none
+|   |   |   |   |   |   |   |   |-node Parser.Attr.grindEq, SourceInfo.none
+|   |   |   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '='
+|   |   |   |   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- ']'
+|   |-node null, SourceInfo.none
+|   |   |-node Parser.Command.private, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'private'
+|   |-node null, SourceInfo.none
+|   |-node null, SourceInfo.none
+|   |-node null, SourceInfo.none
+|   |-node null, SourceInfo.none
+|   |   |-node Parser.Command.nonrec, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'nonrec'
+|-node Parser.Command.theorem, SourceInfo.none
+|   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'theorem'
+|   |-node Parser.Command.declId, SourceInfo.none
+|   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
+|   |   |-node null, SourceInfo.none
+|   |-node Parser.Command.declSig, SourceInfo.none
+|   |   |-node null, SourceInfo.none
+|   |   |   |-node Parser.Term.explicitBinder, SourceInfo.none
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
+|   |   |   |-node Parser.Term.explicitBinder, SourceInfo.none
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
+|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
+|   |   |-node Parser.Term.typeSpec, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+|   |   |   |-node «term_=_», SourceInfo.none
+|   |   |   |   |-node «term_+_», SourceInfo.none
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '='
+|   |   |   |   |-node «term_+_», SourceInfo.none
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
+|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |-node Parser.Command.declValSimple, SourceInfo.none
+|   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
+|   |   |-node Parser.Term.byTactic, SourceInfo.none
+|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'by'
+|   |   |   |-node Parser.Tactic.tacticSeq, SourceInfo.none
+|   |   |   |   |-node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+|   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |-node Parser.Tactic.apply, SourceInfo.none
+|   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+|   |   |   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
+|   |   |-node Parser.Termination.suffix, SourceInfo.none
+|   |   |   |-node null, SourceInfo.none
+|   |   |   |-node null, SourceInfo.none
+|   |   |-node null, SourceInfo.none
+-/
+#guard_msgs in
+inspect
+/-- I am a doc-string -/
+@[simp, grind =]
+private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by
+  apply Int.add_comm
 
 section InspectIT
 
