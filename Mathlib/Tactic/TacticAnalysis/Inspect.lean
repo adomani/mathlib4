@@ -136,14 +136,15 @@ def bracks : BinderInfo → String × String
 `viewTreeWithBars stx` is the default formatting of the output of `treeR stx` that
 uses `| ` to separate nodes.
 -/
-def toMessageData (stx : Syntax) : MessageData :=
-  treeR Syntax.printNode Syntax.getArgs stx (indent := "|   ")
+def toMessageData (stx : Syntax) (indent : String := "|   "): MessageData :=
+  treeR Syntax.printNode Syntax.getArgs stx (indent := indent)
 
 /--
 `inspect cmd` displays the tree structure of the `Syntax` of the command `cmd`.
 -/
-elab (name := inspectStx) "inspect " cmd:command : command => do
-  logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose (toMessageData cmd))
+elab (name := inspectStx) "inspect " cpct:("compact ")? cmd:command : command => do
+  let msg := if cpct.isSome then toMessageData cmd "| " else toMessageData cmd
+  logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose msg)
   elabCommand cmd
 
 /--
@@ -165,97 +166,97 @@ private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by apply Int.add
 
 Syntax.node declaration, SourceInfo.none
 |-Syntax.node declModifiers, SourceInfo.none
-|   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node docComment, SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '/--'
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- 'I am a doc-string -/'
-|   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node Term.attributes, SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '@['
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.node Term.attrInstance, SourceInfo.none
-|   |   |   |   |   |-Syntax.node Term.attrKind, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.node Attr.simp, SourceInfo.none
-|   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- 'simp'
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ','
-|   |   |   |   |-Syntax.node Term.attrInstance, SourceInfo.none
-|   |   |   |   |   |-Syntax.node Term.attrKind, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.node Attr.grind, SourceInfo.none
-|   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'grind'
-|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |   |   |-Syntax.node Attr.grindMod, SourceInfo.none
-|   |   |   |   |   |   |   |   |-Syntax.node Attr.grindEq, SourceInfo.none
-|   |   |   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '='
-|   |   |   |   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- ']'
-|   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node «private», SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'private'
-|   |-Syntax.node null, SourceInfo.none
-|   |-Syntax.node null, SourceInfo.none
-|   |-Syntax.node null, SourceInfo.none
-|   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node «nonrec», SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'nonrec'
+| |-Syntax.node null, SourceInfo.none
+| | |-Syntax.node docComment, SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '/--'
+| | | |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- 'I am a doc-string -/'
+| |-Syntax.node null, SourceInfo.none
+| | |-Syntax.node Term.attributes, SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '@['
+| | | |-Syntax.node null, SourceInfo.none
+| | | | |-Syntax.node Term.attrInstance, SourceInfo.none
+| | | | | |-Syntax.node Term.attrKind, SourceInfo.none
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-Syntax.node Attr.simp, SourceInfo.none
+| | | | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- 'simp'
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ','
+| | | | |-Syntax.node Term.attrInstance, SourceInfo.none
+| | | | | |-Syntax.node Term.attrKind, SourceInfo.none
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-Syntax.node Attr.grind, SourceInfo.none
+| | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'grind'
+| | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | | |-Syntax.node Attr.grindMod, SourceInfo.none
+| | | | | | | | |-Syntax.node Attr.grindEq, SourceInfo.none
+| | | | | | | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '='
+| | | | | | | | | |-Syntax.node null, SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- ']'
+| |-Syntax.node null, SourceInfo.none
+| | |-Syntax.node «private», SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'private'
+| |-Syntax.node null, SourceInfo.none
+| |-Syntax.node null, SourceInfo.none
+| |-Syntax.node null, SourceInfo.none
+| |-Syntax.node null, SourceInfo.none
+| | |-Syntax.node «nonrec», SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'nonrec'
 |-Syntax.node «theorem», SourceInfo.none
-|   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'theorem'
-|   |-Syntax.node declId, SourceInfo.none
-|   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
-|   |   |-Syntax.node null, SourceInfo.none
-|   |-Syntax.node declSig, SourceInfo.none
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-Syntax.node Term.explicitBinder, SourceInfo.none
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
-|   |   |   |-Syntax.node Term.explicitBinder, SourceInfo.none
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
-|   |   |-Syntax.node Term.typeSpec, SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |-Syntax.node «term_=_», SourceInfo.none
-|   |   |   |   |-Syntax.node «term_+_», SourceInfo.none
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
-|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
-|   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '='
-|   |   |   |   |-Syntax.node «term_+_», SourceInfo.none
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
-|   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
-|   |-Syntax.node declValSimple, SourceInfo.none
-|   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
-|   |   |-Syntax.node Term.byTactic, SourceInfo.none
-|   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'by'
-|   |   |   |-Syntax.node Tactic.tacticSeq, SourceInfo.none
-|   |   |   |   |-Syntax.node Tactic.tacticSeq1Indented, SourceInfo.none
-|   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node Tactic.apply, SourceInfo.none
-|   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
-|   |   |   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
-|   |   |-Syntax.node Termination.suffix, SourceInfo.none
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node null, SourceInfo.none
+| |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'theorem'
+| |-Syntax.node declId, SourceInfo.none
+| | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
+| | |-Syntax.node null, SourceInfo.none
+| |-Syntax.node declSig, SourceInfo.none
+| | |-Syntax.node null, SourceInfo.none
+| | | |-Syntax.node Term.explicitBinder, SourceInfo.none
+| | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
+| | | |-Syntax.node Term.explicitBinder, SourceInfo.none
+| | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
+| | | | |-Syntax.node null, SourceInfo.none
+| | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
+| | |-Syntax.node Term.typeSpec, SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
+| | | |-Syntax.node «term_=_», SourceInfo.none
+| | | | |-Syntax.node «term_+_», SourceInfo.none
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '='
+| | | | |-Syntax.node «term_+_», SourceInfo.none
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| |-Syntax.node declValSimple, SourceInfo.none
+| | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
+| | |-Syntax.node Term.byTactic, SourceInfo.none
+| | | |-atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'by'
+| | | |-Syntax.node Tactic.tacticSeq, SourceInfo.none
+| | | | |-Syntax.node Tactic.tacticSeq1Indented, SourceInfo.none
+| | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | |-Syntax.node Tactic.apply, SourceInfo.none
+| | | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+| | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
+| | |-Syntax.node Termination.suffix, SourceInfo.none
+| | | |-Syntax.node null, SourceInfo.none
+| | | |-Syntax.node null, SourceInfo.none
+| | |-Syntax.node null, SourceInfo.none
 -/
 #guard_msgs in
-inspect
+inspect compact
 /-- I am a doc-string -/
 @[simp, grind =]
 private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by
