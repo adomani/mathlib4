@@ -79,19 +79,13 @@ def Syntax.printNode : Syntax → MessageData
 
 
 /--
-info: s (really 5)
-|-s (really 4)
-  |-s (really 3)
-    |-s (really 2)
-      |-s (really 1)
-        |-0
+info: s (really 2)
+|-s (really 1)
+  |-0
 ---
-info: s (really 5)
-|-s (really 4)
-|   |-s (really 3)
-|   |   |-s (really 2)
-|   |   |   |-s (really 1)
-|   |   |   |   |-0
+info: s (really 2)
+|-s (really 1)
+|   |-0
 ---
 info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 |-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
@@ -117,7 +111,7 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 -/
 #guard_msgs in
 #eval do
-  let n := 5
+  let n := 2
   let stx ← `(meta section Hello)
 --  logInfo <| printMe Nat.printNode  Nat.recurse    n
   logInfo <| treeR Nat.printNode    Nat.recurse    n
@@ -133,7 +127,7 @@ def bracks : BinderInfo → String × String
   | _               => ("(", ")")
 
 /--
-`viewTreeWithBars stx` is the default formatting of the output of `treeR stx` that
+`toMessageData stx` is the default formatting of the output of `treeR stx` that
 uses `| ` to separate nodes.
 -/
 def toMessageData (stx : Syntax) (indent : String := "|   "): MessageData :=
