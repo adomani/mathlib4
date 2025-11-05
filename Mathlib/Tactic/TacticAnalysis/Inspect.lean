@@ -1,7 +1,7 @@
 import Lean.Elab.Command
 open Lean
 
-namespace AdomaniUtils
+namespace InspectGeneric
 
 partial
 def printMe {α} (printNode : α → MessageData) (recurse : α → Option (Array α)) (a : α) :
@@ -24,6 +24,33 @@ for better formatting of syntax that includes line breaks.
 def rmLB (s : String) : String :=
   s.replace "\n" "⏎"
 
+#eval show Elab.Term.TermElabM _ from do
+  guard ("hi⏎⏎" == rmLB "hi\n
+")
+
+/--
+`showStx stx replaceLineBreaks flapLth` is a string representation of `stx` that shows at most
+`flapLth` characters on either side of the string.
+
+If `replaceLineBreaks` is `true`, then line breaks are replaced with `⏎` and the whole string
+is enclosed in `'`.
+
+If `flapLth` is `0`, then the entire string is shown.
+-/
+def showStx (stx : Syntax) (replaceLineBreaks : Bool := true) (flapLth : Nat := 10) : String :=
+  let cand := stx.getSubstring?.getD default |>.toString.trim
+  let cand := if replaceLineBreaks then rmLB cand else cand
+  let tick := if replaceLineBreaks then "'" else ""
+  if flapLth != 0 && 2 * flapLth + 1 < cand.length then
+    s!"{tick}{cand.take flapLth}…{cand.takeRight flapLth}{tick}"
+  else
+    s!"{tick}{cand}{tick}"
+
+end InspectGeneric
+
+namespace InspectSyntax
+
+open InspectGeneric Lean Elab Command
 
 def Nat.recurse : Nat → Array Nat
   | 0 => #[]
@@ -105,34 +132,6 @@ def bracks : BinderInfo → String × String
   | .instImplicit   => ("[", "]")
   | _               => ("(", ")")
 
-#eval show Elab.Term.TermElabM _ from do
-  guard ("hi⏎⏎" == rmLB "hi\n
-")
-
-/--
-`showStx stx replaceLineBreaks flapLth` is a string representation of `stx` that shows at most
-`flapLth` characters on either side of the string.
-
-If `replaceLineBreaks` is `true`, then line breaks are replaced with `⏎` and the whole string
-is enclosed in `'`.
-
-If `flapLth` is `0`, then the entire string is shown.
--/
-def showStx (stx : Syntax) (replaceLineBreaks : Bool := true) (flapLth : Nat := 10) : String :=
-  let cand := stx.getSubstring?.getD default |>.toString.trim
-  let cand := if replaceLineBreaks then rmLB cand else cand
-  let tick := if replaceLineBreaks then "'" else ""
-  if flapLth != 0 && 2 * flapLth + 1 < cand.length then
-    s!"{tick}{cand.take flapLth}…{cand.takeRight flapLth}{tick}"
-  else
-    s!"{tick}{cand}{tick}"
-
-end AdomaniUtils
-
-namespace InspectSyntax
-
-open AdomaniUtils Lean Elab Tactic
-
 /--
 `viewTreeWithBars stx` is the default formatting of the output of `treeR stx` that
 uses `| ` to separate nodes.
@@ -145,17 +144,17 @@ def toMessageData (stx : Syntax) : MessageData :=
 -/
 elab (name := inspectStx) "inspect " cmd:command : command => do
   logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose (toMessageData cmd))
-  Command.elabCommand cmd
+  elabCommand cmd
 
 /--
 `inspect tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
 -/
 elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
   logInfo (m!"inspect:\n---\n{tacs}\n---\n\n".compose (toMessageData tacs))
-  evalTactic tacs
+  Tactic.evalTactic tacs
 
 end InspectSyntax
-open Syntax
+open Syntax Parser Command
 /--
 info: inspect:
 ---
@@ -164,96 +163,96 @@ info: inspect:
 private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by apply Int.add_comm
 ---
 
-node Parser.Command.declaration, SourceInfo.none
-|-node Parser.Command.declModifiers, SourceInfo.none
-|   |-node null, SourceInfo.none
-|   |   |-node Parser.Command.docComment, SourceInfo.none
+Syntax.node declaration, SourceInfo.none
+|-Syntax.node declModifiers, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node docComment, SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '/--'
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- 'I am a doc-string -/'
-|   |-node null, SourceInfo.none
-|   |   |-node Parser.Term.attributes, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Term.attributes, SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '@['
-|   |   |   |-node null, SourceInfo.none
-|   |   |   |   |-node Parser.Term.attrInstance, SourceInfo.none
-|   |   |   |   |   |-node Parser.Term.attrKind, SourceInfo.none
-|   |   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |-node Parser.Attr.simp, SourceInfo.none
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.node Term.attrInstance, SourceInfo.none
+|   |   |   |   |   |-Syntax.node Term.attrKind, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.node Attr.simp, SourceInfo.none
 |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- 'simp'
-|   |   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ','
-|   |   |   |   |-node Parser.Term.attrInstance, SourceInfo.none
-|   |   |   |   |   |-node Parser.Term.attrKind, SourceInfo.none
-|   |   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |-node Parser.Attr.grind, SourceInfo.none
+|   |   |   |   |-Syntax.node Term.attrInstance, SourceInfo.none
+|   |   |   |   |   |-Syntax.node Term.attrKind, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.node Attr.grind, SourceInfo.none
 |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'grind'
-|   |   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |   |   |-node Parser.Attr.grindMod, SourceInfo.none
-|   |   |   |   |   |   |   |   |-node Parser.Attr.grindEq, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |   |   |-Syntax.node Attr.grindMod, SourceInfo.none
+|   |   |   |   |   |   |   |   |-Syntax.node Attr.grindEq, SourceInfo.none
 |   |   |   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '='
-|   |   |   |   |   |   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎⟩-- ']'
-|   |-node null, SourceInfo.none
-|   |   |-node Parser.Command.private, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node «private», SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'private'
-|   |-node null, SourceInfo.none
-|   |-node null, SourceInfo.none
-|   |-node null, SourceInfo.none
-|   |-node null, SourceInfo.none
-|   |   |-node Parser.Command.nonrec, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node «nonrec», SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'nonrec'
-|-node Parser.Command.theorem, SourceInfo.none
+|-Syntax.node «theorem», SourceInfo.none
 |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'theorem'
-|   |-node Parser.Command.declId, SourceInfo.none
-|   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
-|   |   |-node null, SourceInfo.none
-|   |-node Parser.Command.declSig, SourceInfo.none
-|   |   |-node null, SourceInfo.none
-|   |   |   |-node Parser.Term.explicitBinder, SourceInfo.none
+|   |-Syntax.node declId, SourceInfo.none
+|   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
+|   |   |-Syntax.node null, SourceInfo.none
+|   |-Syntax.node declSig, SourceInfo.none
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |-Syntax.node Term.explicitBinder, SourceInfo.none
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
-|   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
-|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
-|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
+|   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
-|   |   |   |-node Parser.Term.explicitBinder, SourceInfo.none
+|   |   |   |-Syntax.node Term.explicitBinder, SourceInfo.none
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
-|   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
-|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
-|   |   |   |   |-node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
+|   |   |   |   |-Syntax.node null, SourceInfo.none
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
-|   |   |-node Parser.Term.typeSpec, SourceInfo.none
+|   |   |-Syntax.node Term.typeSpec, SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-|   |   |   |-node «term_=_», SourceInfo.none
-|   |   |   |   |-node «term_+_», SourceInfo.none
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |   |   |-Syntax.node «term_=_», SourceInfo.none
+|   |   |   |   |-Syntax.node «term_+_», SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
 |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
 |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '='
-|   |   |   |   |-node «term_+_», SourceInfo.none
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+|   |   |   |   |-Syntax.node «term_+_», SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
 |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-|   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
-|   |-node Parser.Command.declValSimple, SourceInfo.none
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+|   |-Syntax.node declValSimple, SourceInfo.none
 |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
-|   |   |-node Parser.Term.byTactic, SourceInfo.none
+|   |   |-Syntax.node Term.byTactic, SourceInfo.none
 |   |   |   |-atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'by'
-|   |   |   |-node Parser.Tactic.tacticSeq, SourceInfo.none
-|   |   |   |   |-node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
-|   |   |   |   |   |-node null, SourceInfo.none
-|   |   |   |   |   |   |-node Parser.Tactic.apply, SourceInfo.none
+|   |   |   |-Syntax.node Tactic.tacticSeq, SourceInfo.none
+|   |   |   |   |-Syntax.node Tactic.tacticSeq1Indented, SourceInfo.none
+|   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node Tactic.apply, SourceInfo.none
 |   |   |   |   |   |   |   |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
-|   |   |   |   |   |   |   |-ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
-|   |   |-node Parser.Termination.suffix, SourceInfo.none
-|   |   |   |-node null, SourceInfo.none
-|   |   |   |-node null, SourceInfo.none
-|   |   |-node null, SourceInfo.none
+|   |   |   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
+|   |   |-Syntax.node Termination.suffix, SourceInfo.none
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node null, SourceInfo.none
 -/
 #guard_msgs in
 inspect
@@ -264,7 +263,7 @@ private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by
 
 section InspectIT
 
-open AdomaniUtils Lean Elab Tactic
+open InspectGeneric Lean Elab Tactic
 
 def Array.display {α} [ToString α] (a : Array α) (sep : String := "\n  ") : String :=
   if a.isEmpty then "∅" else
