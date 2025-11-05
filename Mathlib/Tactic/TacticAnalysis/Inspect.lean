@@ -67,6 +67,10 @@ def si : SourceInfo → MessageData
   | .synthetic _pos _endPos canonical => m!"{.ofConstName ``SourceInfo.synthetic} {canonical}"
   | .none => m!"{.ofConstName ``SourceInfo.none}"
 
+def preRes : Syntax.Preresolved → MessageData
+  | .namespace ns => m!"{ns.eraseMacroScopes}"
+  | .decl name fields => m!"{name.eraseMacroScopes}: {fields}"
+
 def Syntax.recurse : Syntax → Option (Array Syntax)
   | .node _ _ args => args
   | _ => some #[]
@@ -74,7 +78,7 @@ def Syntax.recurse : Syntax → Option (Array Syntax)
 def Syntax.printNode : Syntax → MessageData
   | .node info kind .. => m!"{.ofConstName ``Syntax.node} {.ofConstName kind}, {si info}"
   | .atom info val => m!"{.ofConstName ``Syntax.atom} {si info}-- '{val}'"
-  | .ident info rawVal val .. => m!"{.ofConstName ``Syntax.ident} {si info}-- ({rawVal},{val.eraseMacroScopes})"
+  | .ident info rawVal val pr => m!"{.ofConstName ``Syntax.ident} {si info}-- ({rawVal},{val.eraseMacroScopes}) -- {pr.map preRes}"
   | .missing => m!"{.ofConstName ``Syntax.missing}"
 
 
@@ -96,7 +100,7 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
     |-Syntax.atom SourceInfo.synthetic false-- 'meta'
 |-Syntax.atom SourceInfo.synthetic false-- 'section'
 |-Syntax.node null, SourceInfo.synthetic false
-  |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello)
+  |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello) -- []
 ---
 info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 |-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
@@ -107,7 +111,7 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 | | |-Syntax.atom SourceInfo.synthetic false-- 'meta'
 |-Syntax.atom SourceInfo.synthetic false-- 'section'
 |-Syntax.node null, SourceInfo.synthetic false
-| |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello)
+| |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello) -- []
 -/
 #guard_msgs in
 #eval do
@@ -149,6 +153,15 @@ elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
   Tactic.evalTactic tacs
 
 end InspectSyntax
+
+variable (n : Nat) in
+run_cmd
+  let stx ← `(example := n.succ)
+  logInfo <| InspectSyntax.toMessageData stx
+  let stx ← `(example := Nat.succ)
+  logInfo <| InspectSyntax.toMessageData stx
+--example := n.succ
+
 open Syntax Parser Command
 /--
 info: inspect:
@@ -200,40 +213,40 @@ Syntax.node declaration, SourceInfo.none
 |-Syntax.node «theorem», SourceInfo.none
 | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'theorem'
 | |-Syntax.node declId, SourceInfo.none
-| | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X)
+| | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (X,X) -- []
 | | |-Syntax.node null, SourceInfo.none
 | |-Syntax.node declSig, SourceInfo.none
 | | |-Syntax.node null, SourceInfo.none
 | | | |-Syntax.node Term.explicitBinder, SourceInfo.none
 | | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
 | | | | |-Syntax.node null, SourceInfo.none
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a) -- []
 | | | | |-Syntax.node null, SourceInfo.none
 | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Nat,Nat) -- []
 | | | | |-Syntax.node null, SourceInfo.none
 | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
 | | | |-Syntax.node Term.explicitBinder, SourceInfo.none
 | | | | |-atom SourceInfo.original: ⟨⟩⟨⟩-- '('
 | | | | |-Syntax.node null, SourceInfo.none
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b) -- []
 | | | | |-Syntax.node null, SourceInfo.none
 | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (Int,Int) -- []
 | | | | |-Syntax.node null, SourceInfo.none
 | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ')'
 | | |-Syntax.node Term.typeSpec, SourceInfo.none
 | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':'
 | | | |-Syntax.node «term_=_», SourceInfo.none
 | | | | |-Syntax.node «term_+_», SourceInfo.none
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a) -- []
 | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b) -- []
 | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '='
 | | | | |-Syntax.node «term_+_», SourceInfo.none
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (b,b) -- []
 | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- '+'
-| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a)
+| | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a) -- []
 | |-Syntax.node declValSimple, SourceInfo.none
 | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
 | | |-Syntax.node Term.byTactic, SourceInfo.none
@@ -243,7 +256,7 @@ Syntax.node declaration, SourceInfo.none
 | | | | | |-Syntax.node null, SourceInfo.none
 | | | | | | |-Syntax.node Tactic.apply, SourceInfo.none
 | | | | | | | |-atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
-| | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm)
+| | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm) -- []
 | | |-Syntax.node Termination.suffix, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
