@@ -354,50 +354,67 @@ elab "inspect_rhs" : tactic => withMainContext do focus do
 
 
 /--
-info: inspect: '∀ {a : Nat}, a ≠ 0 → (a + a ≠ 0 + 0) ≠ False'
+info: inspect:
+---
+  intro a h
+  have := h
+  inspect_lhs
+  inspect_rhs
+  inspect h
+  inspect this
+  simpa
+---
 
-{'a'} -- forallE
-|-'Nat' '[]' -- const
-|-('h') -- forallE
-|   |-'Ne' -- app
-|   |   |-'Nat' '[]' -- const
-|   |   |-'0' -- bvar
-|   |   |-'OfNat.ofNat' -- app
-|   |   |   |-'Nat' '[]' -- const
-|   |   |   |-'0' -- lit
-|   |   |   |-'instOfNatNat' -- app
-|   |   |   |   |-'0' -- lit
-|   |-'Ne' -- app
-|   |   |-'0' -- sort
-|   |   |-'Ne' -- app
-|   |   |   |-'Nat' '[]' -- const
-|   |   |   |-'HAdd.hAdd' -- app
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'instHAdd' -- app
-|   |   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |   |-'instAddNat' '[]' -- const
-|   |   |   |   |-'1' -- bvar
-|   |   |   |   |-'1' -- bvar
-|   |   |   |-'HAdd.hAdd' -- app
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |-'instHAdd' -- app
-|   |   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |   |-'instAddNat' '[]' -- const
-|   |   |   |   |-'OfNat.ofNat' -- app
-|   |   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |   |-'0' -- lit
-|   |   |   |   |   |-'instOfNatNat' -- app
-|   |   |   |   |   |   |-'0' -- lit
-|   |   |   |   |-'OfNat.ofNat' -- app
-|   |   |   |   |   |-'Nat' '[]' -- const
-|   |   |   |   |   |-'0' -- lit
-|   |   |   |   |   |-'instOfNatNat' -- app
-|   |   |   |   |   |   |-'0' -- lit
-|   |   |-'False' '[]' -- const
+Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
+|-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Parser.Tactic.intro, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'intro'
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a) -- []
+|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Parser.Tactic.tacticHave__, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'have'
+|   |   |   |-Syntax.node Parser.Term.letConfig, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |-Syntax.node Parser.Term.letDecl, SourceInfo.none
+|   |   |   |   |-Syntax.node Parser.Term.letIdDecl, SourceInfo.none
+|   |   |   |   |   |-Syntax.node Parser.Term.letId, SourceInfo.none
+|   |   |   |   |   |   |-Syntax.node hygieneInfo, SourceInfo.none
+|   |   |   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (,[anonymous]) -- []
+|   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
+|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node tacticInspect_lhs, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'inspect_lhs'
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node tacticInspect_rhs, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'inspect_rhs'
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node tacticInspect, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect'
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node tacticInspect, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect'
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (this,this) -- []
+|   |   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Parser.Tactic.simpa, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- 'simpa'
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |-Syntax.node Parser.Tactic.simpaArgsRest, SourceInfo.none
+|   |   |   |   |-Syntax.node Parser.Tactic.optConfig, SourceInfo.none
+|   |   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
+|   |   |   |   |-Syntax.node null, SourceInfo.none
 ---
 info: inspect: 'a + a ≠ 0 + 0'
 
@@ -410,8 +427,8 @@ info: inspect: 'a + a ≠ 0 + 0'
 |   |-'instHAdd' -- app
 |   |   |-'Nat' '[]' -- const
 |   |   |-'instAddNat' '[]' -- const
-|   |-'_uniq.11787' -- fvar
-|   |-'_uniq.11787' -- fvar
+|   |-'_uniq.17240' -- fvar
+|   |-'_uniq.17240' -- fvar
 |-'HAdd.hAdd' -- app
 |   |-'Nat' '[]' -- const
 |   |-'Nat' '[]' -- const
@@ -438,7 +455,7 @@ info: inspect: 'a ≠ 0'
 
 'Ne' -- app
 |-'Nat' '[]' -- const
-|-'_uniq.11787' -- fvar
+|-'_uniq.17240' -- fvar
 |-'OfNat.ofNat' -- app
 |   |-'Nat' '[]' -- const
 |   |-'0' -- lit
@@ -447,7 +464,7 @@ info: inspect: 'a ≠ 0'
 ---
 info: inspect: 'a ≠ 0'
 
-'_uniq.11794' -- mvar
+'_uniq.17247' -- mvar
 -/
 #guard_msgs in
 example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
