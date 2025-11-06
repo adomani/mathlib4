@@ -34,7 +34,8 @@ def bracks : BinderInfo → String × String
   | .instImplicit   => ("[", "]")
   | _               => ("(", ")")
 
-/-- Replace the line breaks in the input string `s` with the unicode `⏎`
+/--
+Replace the line breaks in the input string `s` with the unicode `⏎`
 for better formatting of syntax that includes line breaks.
 -/
 def replaceLinebreaks (s : String) : String :=
@@ -156,14 +157,14 @@ def printNode (ctor? : Bool) (e : Expr) : MessageData :=
   | .mdata md e             => m!"'{md}' '{e}'"
   | .proj na id e           => m!"'{.ofConstName na}' {id} {e}") ++ ctorN
 
-/-- `Lean.Expr.mle? p` take `e : Expr` as input.
+/-- `Lean.Expr.mle? p` takes `e : Expr` as input.
 If `e` represents `a ≤ b`, then it returns `some (t, a, b)`, where `t` is the Type of `a`,
 otherwise, it returns `none`. -/
 @[inline] def mle? (p : Expr) : Option (Expr × Expr × Expr) := do
   let (type, _, lhs, rhs) ← p.app4? ``LE.le
   pure (type, lhs, rhs)
 
-/-- `Lean.Expr.mlt? p` take `e : Expr` as input.
+/-- `Lean.Expr.mlt? p` takes `e : Expr` as input.
 If `e` represents `a < b`, then it returns `some (t, a, b)`, where `t` is the Type of `a`,
 otherwise, it returns `none`. -/
 @[inline] def mlt? (p : Expr) : Option (Expr × Expr × Expr) := do
@@ -201,11 +202,13 @@ def toMessageData (ex : Expr)
 /-- A convenience function: simply logs the output of `InspectExpr.toMessageData` with the
 default values adjusted to what the `inspect` command expects. -/
 def inspectM {m : Type → Type} [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m]
-    (ex : Expr) (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
+    (ex : Expr)
+    (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
     m Unit :=
   logInfo <| toMessageData ex ctor? (indent := indent) (sep := sep)
 
-/-- `inspect id?` displays the tree structure of the `Expr`ession in the goal.
+/--
+`inspect id?` displays the tree structure of the `Expr`ession in the goal.
 If the optional identifier `id?` is passed, then `inspect` shows the tree-structure for the
 `Expr`ession at the given identifier.
 
@@ -216,7 +219,7 @@ elab (name := tacticInspect) "inspect" bang:(colGt ppSpace ident)? : tactic => w
   let expr ← match bang with
     | none => getMainTarget
     | some id => do
-      let loc := ← Term.elabTerm id none
+      let loc ← Term.elabTerm id none
       let some decl := (← getLCtx).findFVar? loc | throwError m!"not found"
       pure decl.type
   inspectM expr
@@ -240,7 +243,7 @@ namespace Lean.Elab
 /-- Printing out a `CompletionInfo`. -/
 def CompletionInfo.ctor : CompletionInfo → MessageData
   | .dot ti eType?      => m!"{.ofConstName ``dot} {.ofConstName ti.elaborator}, {ti.stx}, {eType?}"
-  | .id name nm _ _ e?  => m!"{.ofConstName ``id} {name} '{nm.eraseMacroScopes}' {e?}"  -- `eraseMacroScopes` fixes tests
+  | .id name nm _ _ e?  => m!"{.ofConstName ``id} {name} '{nm.eraseMacroScopes}' {e?}"
   | .dotId _ nm _ e?    => m!"{.ofConstName ``dotId} '{.ofConstName nm}' {e?}"
   | .fieldId _ nm? _ sn => m!"{.ofConstName ``fieldId} '{nm?.map MessageData.ofConstName}' '{sn}'"
   | .namespaceId stx    => m!"{.ofConstName ``namespaceId} {showStx stx}"

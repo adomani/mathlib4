@@ -1,6 +1,7 @@
 import Mathlib.Tactic.TacticAnalysis.Inspect
 import Lean.Elab.App
 import Lean.Linter.MissingDocs
+
 open Lean
 
 open InspectGeneric in
