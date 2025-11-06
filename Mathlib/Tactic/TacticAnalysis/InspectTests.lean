@@ -147,7 +147,7 @@ info: inspect:
 ---
 /-- I am a doc-string -/
 @[simp, grind =]
-private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by apply Int.add_comm
+private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by inspect_syntax apply Int.add_comm
 ---
 
 Syntax.node Parser.Command.declaration, SourceInfo.none
@@ -233,17 +233,89 @@ Syntax.node Parser.Command.declaration, SourceInfo.none
 | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
 | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
 | | | | | |-Syntax.node null, SourceInfo.none
-| | | | | | |-Syntax.node Parser.Tactic.apply, SourceInfo.none
-| | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
-| | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⟩-- (Int.add_comm,Int.add_comm) -- []
+| | | | | | |-Syntax.node InspectSyntax.inspectTaccticCmd, SourceInfo.none
+| | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect_syntax'
+| | | | | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
+| | | | | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+| | | | | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | | | | | |-Syntax.node Parser.Tactic.apply, SourceInfo.none
+| | | | | | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+| | | | | | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm) -- []
 | | |-Syntax.node Parser.Termination.suffix, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
 | | |-Syntax.node null, SourceInfo.none
+---
+info: inspect:
+---
+apply Int.add_comm
+---
+
+Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
+|-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Parser.Tactic.apply, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+|   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- (Int.add_comm,Int.add_comm) -- []
 -/
 #guard_msgs in
 inspect_syntax compact
 /-- I am a doc-string -/
 @[simp, grind =]
 private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by
-  apply Int.add_comm
+  inspect_syntax apply Int.add_comm
+
+open Elab PartialContextInfo
+/--
+info: inspectIT:
+---
+set_option linter.missingDocs true
+---
+
+commandCtx
+|-Info.ofCommandInfo: Lean.Elab.Command.elabSetOption, 'set_option…gDocs true'
+|   |-Info.ofCompletionInfo.CompletionInfo.option 'set_option…issingDocs'
+|   |-Info.ofOptionInfo: linter.missingDocs, Lean.Linter.linter.missingDocs
+-/
+#guard_msgs in
+inspectIT
+set_option linter.missingDocs true
+
+/--
+info: inspectIT:
+---
+@[simp]
+example : True := .intro
+---
+commandCtx
+|-Info.ofCommandInfo: Lean.Elab.Command.elabDeclaration, '@[simp]⏎ex… := .intro'
+| |-commandCtx
+| | |-commandCtx
+| | | |-parentDeclCtx _example
+| | | | |-Info.ofTermInfo: Lean.Elab.Term.elabIdent, 'True', True
+| | | | | |-Info.ofCompletionInfo.CompletionInfo.id True 'True' Sort ?u.3511
+| | | | | |-Info.ofTermInfo: [anonymous], 'True', True
+| |-commandCtx
+| | |-commandCtx
+| | | |-parentDeclCtx _example
+| | | | |-Info.ofCustomInfo: '.intro'
+| | | | | |-Info.ofTermInfo: Lean.Elab.Term.elabDotIdent, '.intro', True.intro
+| | | | | | |-Info.ofCompletionInfo.CompletionInfo.dotId 'intro' True
+| | | | | | |-Info.ofTermInfo: [anonymous], '.intro', True.intro
+| |-commandCtx
+| | |-commandCtx
+| | | |-parentDeclCtx _example
+| | | | |-Info.ofCommandInfo: Meta.simpExtension, 'simp'
+| | | | | |-Info.ofCommandInfo: Meta.simpExtension, 'simp'
+| |-commandCtx
+| | |-commandCtx
+| | | |-commandCtx
+| | | | |-Info.ofTermInfo: [anonymous], 'example', _example
+| |-commandCtx
+| | |-commandCtx
+| | | |-Info.ofTermInfo: [anonymous], '', _fvar.3512
+-/
+#guard_msgs in
+inspectIT compact
+@[simp]
+example : True := .intro
