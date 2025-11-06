@@ -3,13 +3,21 @@ open Lean
 
 namespace InspectGeneric
 
-partial
-def printMe {α} (printNode : α → MessageData) (recurse : α → Array α) (a : α) :
-    MessageData :=
-  let recs := (recurse a).map (printMe printNode recurse)
-  let msgs := #[printNode a] ++ recs
-  m!"\n".joinSep msgs.toList
+/--
+`treeR printNode recurse a` expects two function inputs and a term `a : α`.
 
+The type `α` admits the functions
+* `printNode : α → MessageData` representing some way of converting `a : α` as a
+  message.
+* `recurse : α → Array α` taking elements of `α` to elements that are "smaller".
+  For instance, if `α` is an inductive type whose constructors involve `α` itself,
+  the `recurse` function could take each `a : α` to the array of terms of `α` that
+  `a` contains.
+
+The function then combines the "tree" starting from `a` obtained by repeatedly
+applying `recurse` and prints it all out in a tree-like diagram, using `printNode`
+on each element of `α` that `recurse` visits.
+-/
 partial
 def treeR {α} (printNode : α → MessageData) (recurse : α → Array α) (stx : α)
     (sep : MessageData := "\n") (indent : MessageData := "  ") :
