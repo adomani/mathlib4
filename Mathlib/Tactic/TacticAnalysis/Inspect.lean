@@ -33,14 +33,14 @@ def bracks : BinderInfo → String × String
   | .instImplicit   => ("[", "]")
   | _               => ("(", ")")
 
-/-- replaces line breaks with the literal string `⟨['\', 'n']⟩`
+/-- Replace the line breaks in the input string `s` with the unicode `⏎`
 for better formatting of syntax that includes line breaks.
 -/
-def rmLB (s : String) : String :=
+def replaceLinebreaks (s : String) : String :=
   s.replace "\n" "⏎"
 
-#eval show Elab.Term.TermElabM _ from do
-  guard ("hi⏎⏎" == rmLB "hi\n
+run_meta
+  guard ("hi⏎⏎" == replaceLinebreaks "hi\n
 ")
 
 /--
@@ -54,7 +54,7 @@ If `flapLth` is `0`, then the entire string is shown.
 -/
 def showStx (stx : Syntax) (replaceLineBreaks : Bool := true) (flapLth : Nat := 10) : String :=
   let cand := stx.getSubstring?.getD default |>.toString.trim
-  let cand := if replaceLineBreaks then rmLB cand else cand
+  let cand := if replaceLineBreaks then replaceLinebreaks cand else cand
   let tick := if replaceLineBreaks then "'" else ""
   if flapLth != 0 && 2 * flapLth + 1 < cand.length then
     s!"{tick}{cand.take flapLth}…{cand.takeRight flapLth}{tick}"
@@ -67,47 +67,54 @@ namespace InspectSyntax
 
 open InspectGeneric Lean Elab Command
 
-/-- Print out a `SourceInfo`. -/
-def si : SourceInfo → MessageData
+/-- Print a `SourceInfo`. -/
+def printSourceInfo : SourceInfo → MessageData
   | .original leading _pos trailing _endPos =>
-    m!"{.ofConstName ``SourceInfo.original}: ⟨{rmLB leading.toString}⟩⟨{rmLB trailing.toString}⟩"
+    m!"{.ofConstName ``SourceInfo.original}: \
+      ⟨{replaceLinebreaks leading.toString}⟩⟨{replaceLinebreaks trailing.toString}⟩"
   | .synthetic _pos _endPos canonical => m!"{.ofConstName ``SourceInfo.synthetic} {canonical}"
   | .none => m!"{.ofConstName ``SourceInfo.none}"
 
+/-- Print a `Syntax.Preresolved`. -/
 def preRes : Syntax.Preresolved → MessageData
   | .namespace ns => m!"{ns.eraseMacroScopes}"
-  | .decl name fields => m!"{name.eraseMacroScopes}: {fields}"
+  | .decl name fields => m!"{.ofConstName name.eraseMacroScopes}: {fields}"
 
-def recurse : Syntax → Option (Array Syntax)
-  | .node _ _ args => args
-  | _ => some #[]
-
+/-- Convert a `Syntax` node to a `MessageData`. -/
 def printNode : Syntax → MessageData
-  | .node info kind .. => m!"{.ofConstName ``Syntax.node} {.ofConstName kind}, {si info}"
-  | .atom info val => m!"{.ofConstName ``Syntax.atom} {si info}-- '{val}'"
-  | .ident info rawVal val pr => m!"{.ofConstName ``Syntax.ident} {si info}-- ({rawVal},{val.eraseMacroScopes}) -- {pr.map preRes}"
-  | .missing => m!"{.ofConstName ``Syntax.missing}"
+  | .node info kind .. =>
+    m!"{.ofConstName ``Syntax.node} {.ofConstName kind}, {printSourceInfo info}"
+  | .atom info val =>
+    m!"{.ofConstName ``Syntax.atom} {printSourceInfo info}-- '{val}'"
+  | .ident info rawVal val pr =>
+    m!"{.ofConstName ``Syntax.ident} {printSourceInfo info}-- \
+      ({rawVal},{val.eraseMacroScopes}) -- {pr.map preRes}"
+  | .missing =>
+    m!"{.ofConstName ``Syntax.missing}"
 
 /--
-`toMessageData stx` is the default formatting of the output of `treeR stx` that
-uses `| ` to separate nodes.
+`toMessageData stx` returns the default formatting of `Syntax` using `treeR stx`.
+It prepends a printing of the input `Syntax` as well.
 -/
-def toMessageData (stx : Syntax) (indent : String := "|   "): MessageData :=
-  treeR InspectSyntax.printNode Syntax.getArgs stx (indent := indent)
+def toMessageData (stx : Syntax) (indent : String := "|   ") (sep : String := "\n") : MessageData :=
+  m!"inspect:\n---\n{stx}\n---\n\n".compose <|
+    treeR InspectSyntax.printNode Syntax.getArgs stx (indent := indent) (sep := sep)
 
 /--
 `inspect cmd` displays the tree structure of the `Syntax` of the command `cmd`.
+
+The variant `inspect compact cmd` reduces the horizontal spacing of the output.
 -/
 elab (name := inspectStx) "inspect " cpct:("compact ")? cmd:command : command => do
   let msg := if cpct.isSome then toMessageData cmd "| " else toMessageData cmd
-  logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose msg)
-  Command.elabCommand cmd
+  logInfo msg
+  elabCommand cmd
 
 /--
 `inspect tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
 -/
 elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
-  logInfo (m!"inspect:\n---\n{tacs}\n---\n\n".compose (toMessageData tacs))
+  logInfo (toMessageData tacs)
   Tactic.evalTactic tacs
 
 end InspectSyntax
