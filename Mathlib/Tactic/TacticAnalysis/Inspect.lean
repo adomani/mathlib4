@@ -81,6 +81,224 @@ def Syntax.printNode : Syntax → MessageData
   | .ident info rawVal val pr => m!"{.ofConstName ``Syntax.ident} {si info}-- ({rawVal},{val.eraseMacroScopes}) -- {pr.map preRes}"
   | .missing => m!"{.ofConstName ``Syntax.missing}"
 
+/-- The brackets corresponding to a given `BinderInfo`. Copied from `Mathlib.Lean.Expr.Basic`. -/
+def bracks : BinderInfo → String × String
+  | .implicit       => ("{", "}")
+  | .strictImplicit => ("{{", "}}")
+  | .instImplicit   => ("[", "]")
+  | _               => ("(", ")")
+
+def Expr.recurse : Expr → Array Expr
+  | ex@(.app ..)        => ex.getAppArgs
+  | .lam _na t b _i     => #[t, b]
+  | .forallE _na t b _i => #[t, b]
+  | .letE _na t v b _i  => #[t, v, b]
+  | .mdata _md e        => #[e]
+  | .proj _na _id e     => #[e]
+  | _ => #[]
+
+def Expr.printNode (ctor? : Bool) (e : Expr) : MessageData :=
+  let ctorN := if ctor? then m!" -- {e.ctorName}" else m!""
+  (match e with
+  | .bvar n                 => m!"'{n}'"
+  | .fvar fv                => m!"'{fv.name}'"
+  | .mvar mv                => m!"'{mv.name}'"
+  | .sort u                 => m!"'{u}'"
+  | .const na lv            => m!"'{na}' '{lv}'"
+  | ex@(.app ..)            => m!"'{.ofConstName ex.getAppFn.constName}'"
+  | .lam na _t _b i         => m!"{(bracks i).1}'{na}'{(bracks i).2}"
+  | .forallE na _t _b i     => m!"{(bracks i).1}'{na}'{(bracks i).2}"
+  | .letE na t v b i        => m!"'{na}' {t} {v} {b} {i}"
+  | .lit (Literal.natVal n) => m!"'{n}'"
+  | .lit (Literal.strVal n) => m!"'{n}'"
+  | .mdata md e             => m!"'{md}' '{e}'"
+  | .proj na id e           => m!"'{.ofConstName na}' {id} {e}") ++ ctorN
+
+end InspectSyntax
+
+namespace Lean.Expr
+
+/-- `Lean.Expr.mle? p` take `e : Expr` as input.
+If `e` represents `a ≤ b`, then it returns `some (t, a, b)`, where `t` is the Type of `a`,
+otherwise, it returns `none`. -/
+@[inline] def mle? (p : Expr) : Option (Expr × Expr × Expr) := do
+  let (type, _, lhs, rhs) ← p.app4? ``LE.le
+  pure (type, lhs, rhs)
+
+/-- `Lean.Expr.mlt? p` take `e : Expr` as input.
+If `e` represents `a < b`, then it returns `some (t, a, b)`, where `t` is the Type of `a`,
+otherwise, it returns `none`. -/
+@[inline] def mlt? (p : Expr) : Option (Expr × Expr × Expr) := do
+  let (type, _, lhs, rhs) ← p.app4? ``LT.lt
+  pure (type, lhs, rhs)
+
+end Lean.Expr
+
+/-- `lhsrhs ex` returns the Type, lhs, rhs of `ex`, assuming that `ex` is of one of the forms
+`a = b`, `a ≠ b`, `a ≤ b`, `a < b`. -/
+def lhsrhs (ex : Expr) : Option (Expr × Expr × Expr) :=
+  if let some x := ex.eq?  then x else
+  if let some x := ex.ne?  then x else
+  if let some x := ex.mle? then x else
+  if let some x := ex.iff? then some (default, x) else
+  if let some x := ex.and? then some (default, x) else
+  if let .mdata _ e := ex  then lhsrhs e else
+  ex.mlt?
+
+namespace InspectSyntax
+open Lean Elab Tactic Expr InspectGeneric
+/-- `toMessageData ex` recursively formats the output of `treeM`. -/
+partial
+def Expr.toMessageData (ex : Expr)
+    (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
+    MessageData :=
+  treeR (Expr.printNode ctor?) Expr.recurse ex (indent := indent) (sep := sep)
+
+def inspectM {m : Type → Type} [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m]
+    (ex : Expr) (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
+    m Unit :=
+  logInfo <|
+    m!"inspect: '{ex}'\n\n" ++ Expr.toMessageData ex ctor? (indent := indent) (sep := sep)
+
+elab "inspect1" : tactic => do
+  let tgt ← Tactic.getMainTarget
+  logInfo <| m!"inspect: '{tgt}'\n\n" ++ Expr.toMessageData tgt true --(indent := "|   ")
+
+/-- `inspect id?` displays the tree structure of the `Expr`ession in the goal.
+If the optional identifier `id?` is passed, then `inspect` shows the tree-structure for the
+`Expr`ession at the given identifier.
+
+The variants `inspect_lhs` and `inspect_rhs` do what you imagine, when the goal is
+`a = b`, `a ≠ b`, `a ≤ b`, `a < b`.
+-/
+elab (name := tacticInspect) "inspect" bang:(colGt ppSpace ident)? : tactic => withMainContext do
+  let expr := ← match bang with
+    | none => getMainTarget
+    | some id => do
+      let loc := ← Term.elabTerm id none
+      let some decl := (← getLCtx).findFVar? loc | throwError m!"not found"
+      pure decl.type
+  inspectM expr
+
+@[inherit_doc tacticInspect]
+elab "inspect_lhs" : tactic => withMainContext do focus do
+  let some (_, x, _) := lhsrhs (← getMainTarget) | throwError "Try 'inspect'"
+  inspectM x
+
+@[inherit_doc tacticInspect]
+elab "inspect_rhs" : tactic => withMainContext do focus do
+  let some (_, _, x) := lhsrhs (← getMainTarget) | throwError "Try 'inspect'"
+  inspectM x
+
+
+/--
+info: inspect: '∀ {a : Nat}, a ≠ 0 → (a + a ≠ 0 + 0) ≠ False'
+
+{'a'} -- forallE
+|-'Nat' '[]' -- const
+|-('h') -- forallE
+|   |-'Ne' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'0' -- bvar
+|   |   |-'OfNat.ofNat' -- app
+|   |   |   |-'Nat' '[]' -- const
+|   |   |   |-'0' -- lit
+|   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |-'0' -- lit
+|   |-'Ne' -- app
+|   |   |-'0' -- sort
+|   |   |-'Ne' -- app
+|   |   |   |-'Nat' '[]' -- const
+|   |   |   |-'HAdd.hAdd' -- app
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'instHAdd' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'instAddNat' '[]' -- const
+|   |   |   |   |-'1' -- bvar
+|   |   |   |   |-'1' -- bvar
+|   |   |   |-'HAdd.hAdd' -- app
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'instHAdd' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'instAddNat' '[]' -- const
+|   |   |   |   |-'OfNat.ofNat' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'0' -- lit
+|   |   |   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |   |   |-'0' -- lit
+|   |   |   |   |-'OfNat.ofNat' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'0' -- lit
+|   |   |   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |   |   |-'0' -- lit
+|   |   |-'False' '[]' -- const
+---
+info: inspect: 'a + a ≠ 0 + 0'
+
+'Ne' -- app
+|-'Nat' '[]' -- const
+|-'HAdd.hAdd' -- app
+|   |-'Nat' '[]' -- const
+|   |-'Nat' '[]' -- const
+|   |-'Nat' '[]' -- const
+|   |-'instHAdd' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'instAddNat' '[]' -- const
+|   |-'_uniq.12198' -- fvar
+|   |-'_uniq.12198' -- fvar
+|-'HAdd.hAdd' -- app
+|   |-'Nat' '[]' -- const
+|   |-'Nat' '[]' -- const
+|   |-'Nat' '[]' -- const
+|   |-'instHAdd' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'instAddNat' '[]' -- const
+|   |-'OfNat.ofNat' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'0' -- lit
+|   |   |-'instOfNatNat' -- app
+|   |   |   |-'0' -- lit
+|   |-'OfNat.ofNat' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'0' -- lit
+|   |   |-'instOfNatNat' -- app
+|   |   |   |-'0' -- lit
+---
+info: inspect: 'False'
+
+'False' '[]' -- const
+---
+info: inspect: 'a ≠ 0'
+
+'Ne' -- app
+|-'Nat' '[]' -- const
+|-'_uniq.12198' -- fvar
+|-'OfNat.ofNat' -- app
+|   |-'Nat' '[]' -- const
+|   |-'0' -- lit
+|   |-'instOfNatNat' -- app
+|   |   |-'0' -- lit
+---
+info: inspect: 'a ≠ 0'
+
+'_uniq.12205' -- mvar
+-/
+#guard_msgs in
+example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
+  revert a
+  inspect
+  intro a h
+  have := h
+  inspect_lhs
+  inspect_rhs
+  inspect h
+  inspect this
+  simpa
+
 
 /--
 info: s (really 2)
@@ -123,12 +341,6 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
   logInfo <| treeR Syntax.printNode Syntax.getArgs stx
   logInfo <| treeR Syntax.printNode Syntax.getArgs stx (indent := "| ")
 
-/-- The brackets corresponding to a given `BinderInfo`. Copied from `Mathlib.Lean.Expr.Basic`. -/
-def bracks : BinderInfo → String × String
-  | .implicit       => ("{", "}")
-  | .strictImplicit => ("{{", "}}")
-  | .instImplicit   => ("[", "]")
-  | _               => ("(", ")")
 
 /--
 `toMessageData stx` is the default formatting of the output of `treeR stx` that
@@ -143,7 +355,7 @@ def toMessageData (stx : Syntax) (indent : String := "|   "): MessageData :=
 elab (name := inspectStx) "inspect " cpct:("compact ")? cmd:command : command => do
   let msg := if cpct.isSome then toMessageData cmd "| " else toMessageData cmd
   logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose msg)
-  elabCommand cmd
+  Command.elabCommand cmd
 
 /--
 `inspect tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
