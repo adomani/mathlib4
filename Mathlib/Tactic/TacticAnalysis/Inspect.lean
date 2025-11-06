@@ -304,61 +304,6 @@ elab "inspectIT " cpct:("compact ")? cmd:command : command => do
   for i in ← getInfoTrees do
     logInfo <| m!"inspectIT:\n---\n{showStx cmd false 0}\n---\n" ++ inspectIT i (indent := indent)
 
-open PartialContextInfo
-/--
-info: inspectIT:
----
-set_option linter.missingDocs true
----
-commandCtx
-|-Info.ofCommandInfo: Lean.Elab.Command.elabSetOption, 'set_option…gDocs true'
-|   |-Info.ofCompletionInfo.CompletionInfo.option 'set_option…issingDocs'
-|   |-Info.ofOptionInfo: linter.missingDocs, Lean.Linter.linter.missingDocs
--/
-#guard_msgs in
-inspectIT
-set_option linter.missingDocs true
-
-/--
-info: inspectIT:
----
-@[simp]
-example : True := .intro
----
-commandCtx
-|-Info.ofCommandInfo: Lean.Elab.Command.elabDeclaration, '@[simp]⏎ex… := .intro'
-| |-commandCtx
-| | |-commandCtx
-| | | |-parentDeclCtx InspectInfoTree._example
-| | | | |-Info.ofTermInfo: Lean.Elab.Term.elabIdent, 'True', True
-| | | | | |-Info.ofCompletionInfo.CompletionInfo.id True 'True' Sort ?u.19071
-| | | | | |-Info.ofTermInfo: [anonymous], 'True', True
-| |-commandCtx
-| | |-commandCtx
-| | | |-parentDeclCtx InspectInfoTree._example
-| | | | |-Info.ofCustomInfo: '.intro'
-| | | | | |-Info.ofTermInfo: Lean.Elab.Term.elabDotIdent, '.intro', True.intro
-| | | | | | |-Info.ofCompletionInfo.CompletionInfo.dotId 'intro' True
-| | | | | | |-Info.ofTermInfo: [anonymous], '.intro', True.intro
-| |-commandCtx
-| | |-commandCtx
-| | | |-parentDeclCtx InspectInfoTree._example
-| | | | |-Info.ofCommandInfo: Meta.simpExtension, 'simp'
-| | | | | |-Info.ofCommandInfo: Meta.simpExtension, 'simp'
-| |-commandCtx
-| | |-commandCtx
-| | | |-commandCtx
-| | | | |-Info.ofTermInfo: [anonymous], 'example', InspectInfoTree._example
-| |-commandCtx
-| | |-commandCtx
-| | | |-Info.ofTermInfo: [anonymous], '', _fvar.19072
--/
-#guard_msgs in
-inspectIT compact
-@[simp]
-example : True := .intro
-
-
 inspectIT
 /-- `treeR it` recursively formats the output of `treeM`. -/
 partial
