@@ -84,22 +84,22 @@ def printNode : Syntax → MessageData
 `toMessageData stx` is the default formatting of the output of `treeR stx` that
 uses `| ` to separate nodes.
 -/
-def toMessageData (stx : Syntax) (indent : String := "|   "): MessageData :=
+def toMessageData (stx : Syntax) (indent : String := "|   ") : MessageData :=
   treeR InspectSyntax.printNode Syntax.getArgs stx (indent := indent)
 
 /--
-`inspect cmd` displays the tree structure of the `Syntax` of the command `cmd`.
+`inspect_syntax cmd` displays the tree structure of the `Syntax` of the command `cmd`.
 -/
-elab (name := inspectStx) "inspect " cpct:("compact ")? cmd:command : command => do
+elab (name := inspectStx) "inspect_syntax " cpct:("compact ")? cmd:command : command => do
   let msg := if cpct.isSome then toMessageData cmd "| " else toMessageData cmd
-  logInfo (m!"inspect:\n---\n{cmd}\n---\n\n".compose msg)
+  logInfo (m!"inspect syntax:\n---\n{cmd}\n---\n\n".compose msg)
   Command.elabCommand cmd
 
 /--
-`inspect tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
+`inspect_syntax tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
 -/
-elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
-  logInfo (m!"inspect:\n---\n{tacs}\n---\n\n".compose (toMessageData tacs))
+elab (name := inspectTac) "inspect_syntax " tacs:tacticSeq : tactic => do
+  logInfo (m!"inspect syntax:\n---\n{tacs}\n---\n\n".compose (toMessageData tacs))
   Tactic.evalTactic tacs
 
 end InspectSyntax

@@ -35,67 +35,50 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 
 
 /--
-info: inspect:
----
-  intro a h
-  have := h
-  inspect_lhs
-  inspect_rhs
-  inspect h
-  inspect this
-  simpa
----
+info: inspect: '∀ {a : Nat}, a ≠ 0 → (a + a ≠ 0 + 0) ≠ False'
 
-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
-|-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
-|   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node Parser.Tactic.intro, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'intro'
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨ ⟩-- (a,a) -- []
-|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node Parser.Tactic.tacticHave__, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'have'
-|   |   |   |-Syntax.node Parser.Term.letConfig, SourceInfo.none
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-Syntax.node Parser.Term.letDecl, SourceInfo.none
-|   |   |   |   |-Syntax.node Parser.Term.letIdDecl, SourceInfo.none
-|   |   |   |   |   |-Syntax.node Parser.Term.letId, SourceInfo.none
-|   |   |   |   |   |   |-Syntax.node hygieneInfo, SourceInfo.none
-|   |   |   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⟩-- (,[anonymous]) -- []
-|   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- ':='
-|   |   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node InspectExpr.tacticInspect_lhs, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'inspect_lhs'
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node InspectExpr.tacticInspect_rhs, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎  ⟩-- 'inspect_rhs'
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node InspectExpr.tacticInspect, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect'
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (h,h) -- []
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node InspectExpr.tacticInspect, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect'
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎  ⟩-- (this,this) -- []
-|   |   |-Syntax.node null, SourceInfo.none
-|   |   |-Syntax.node Parser.Tactic.simpa, SourceInfo.none
-|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨⏎⏎⟩-- 'simpa'
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |-Syntax.node Parser.Tactic.simpaArgsRest, SourceInfo.none
-|   |   |   |   |-Syntax.node Parser.Tactic.optConfig, SourceInfo.none
-|   |   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.node null, SourceInfo.none
-|   |   |   |   |-Syntax.node null, SourceInfo.none
+{'a'} -- forallE
+|-'Nat' '[]' -- const
+|-('h') -- forallE
+|   |-'Ne' -- app
+|   |   |-'Nat' '[]' -- const
+|   |   |-'0' -- bvar
+|   |   |-'OfNat.ofNat' -- app
+|   |   |   |-'Nat' '[]' -- const
+|   |   |   |-'0' -- lit
+|   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |-'0' -- lit
+|   |-'Ne' -- app
+|   |   |-'0' -- sort
+|   |   |-'Ne' -- app
+|   |   |   |-'Nat' '[]' -- const
+|   |   |   |-'HAdd.hAdd' -- app
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'instHAdd' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'instAddNat' '[]' -- const
+|   |   |   |   |-'1' -- bvar
+|   |   |   |   |-'1' -- bvar
+|   |   |   |-'HAdd.hAdd' -- app
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |-'instHAdd' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'instAddNat' '[]' -- const
+|   |   |   |   |-'OfNat.ofNat' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'0' -- lit
+|   |   |   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |   |   |-'0' -- lit
+|   |   |   |   |-'OfNat.ofNat' -- app
+|   |   |   |   |   |-'Nat' '[]' -- const
+|   |   |   |   |   |-'0' -- lit
+|   |   |   |   |   |-'instOfNatNat' -- app
+|   |   |   |   |   |   |-'0' -- lit
+|   |   |-'False' '[]' -- const
 ---
 info: inspect: 'a + a ≠ 0 + 0'
 
@@ -160,11 +143,11 @@ example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
   simpa
 
 /--
-info: inspect:
+info: inspect syntax:
 ---
 /-- I am a doc-string -/
 @[simp, grind =]
-private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by apply Int.add_comm
+private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by inspect_syntax apply Int.add_comm
 ---
 
 Syntax.node Parser.Command.declaration, SourceInfo.none
@@ -250,17 +233,34 @@ Syntax.node Parser.Command.declaration, SourceInfo.none
 | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
 | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
 | | | | | |-Syntax.node null, SourceInfo.none
-| | | | | | |-Syntax.node Parser.Tactic.apply, SourceInfo.none
-| | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
-| | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⟩-- (Int.add_comm,Int.add_comm) -- []
+| | | | | | |-Syntax.node InspectSyntax.inspectTac, SourceInfo.none
+| | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect_syntax'
+| | | | | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
+| | | | | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+| | | | | | | | | |-Syntax.node null, SourceInfo.none
+| | | | | | | | | | |-Syntax.node Parser.Tactic.apply, SourceInfo.none
+| | | | | | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+| | | | | | | | | | | |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⟩-- (Int.add_comm,Int.add_comm) -- []
 | | |-Syntax.node Parser.Termination.suffix, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
 | | | |-Syntax.node null, SourceInfo.none
 | | |-Syntax.node null, SourceInfo.none
+---
+info: inspect syntax:
+---
+apply Int.add_comm
+---
+
+Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
+|-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
+|   |-Syntax.node null, SourceInfo.none
+|   |   |-Syntax.node Parser.Tactic.apply, SourceInfo.none
+|   |   |   |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'apply'
+|   |   |   |-Syntax.ident SourceInfo.original: ⟨⟩⟨⏎⟩-- (Int.add_comm,Int.add_comm) -- []
 -/
 #guard_msgs in
-inspect compact
+inspect_syntax compact
 /-- I am a doc-string -/
 @[simp, grind =]
 private nonrec theorem X (a : Nat) (b : Int) : a + b = b + a := by
-  apply Int.add_comm
+  inspect_syntax apply Int.add_comm
