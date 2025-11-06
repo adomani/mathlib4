@@ -233,7 +233,7 @@ Syntax.node Parser.Command.declaration, SourceInfo.none
 | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
 | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none
 | | | | | |-Syntax.node null, SourceInfo.none
-| | | | | | |-Syntax.node InspectSyntax.inspectTaccticCmd, SourceInfo.none
+| | | | | | |-Syntax.node InspectSyntax.inspectTacticCmd, SourceInfo.none
 | | | | | | | |-Syntax.atom SourceInfo.original: ⟨⟩⟨ ⟩-- 'inspect_syntax'
 | | | | | | | |-Syntax.node Parser.Tactic.tacticSeq, SourceInfo.none
 | | | | | | | | |-Syntax.node Parser.Tactic.tacticSeq1Indented, SourceInfo.none

@@ -183,19 +183,24 @@ def lhsrhs (ex : Expr) : Option (Expr × Expr × Expr) :=
 end Lean.Expr
 
 namespace InspectExpr
+
 open Lean Elab Tactic Expr InspectGeneric
-/-- `toMessageData ex` recursively formats the output of `treeM`. -/
+
+/--
+`toMessageData ex` returns the default formatting of `Expr`ession using `treeR ex`.
+It prepends a printing of the input `Expr`ession as well.
+-/
 partial
-def Expr.toMessageData (ex : Expr)
+def toMessageData (ex : Expr)
     (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
     MessageData :=
-  treeR (Expr.printNode ctor?) Expr.recurse ex (indent := indent) (sep := sep)
+  m!"inspect: '{ex}'\n\n" ++
+    treeR (Expr.printNode ctor?) Expr.recurse ex (indent := indent) (sep := sep)
 
 def inspectM {m : Type → Type} [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m]
     (ex : Expr) (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
     m Unit :=
-  logInfo <|
-    m!"inspect: '{ex}'\n\n" ++ Expr.toMessageData ex ctor? (indent := indent) (sep := sep)
+  logInfo <| toMessageData ex ctor? (indent := indent) (sep := sep)
 
 /-- `inspect id?` displays the tree structure of the `Expr`ession in the goal.
 If the optional identifier `id?` is passed, then `inspect` shows the tree-structure for the
@@ -205,7 +210,7 @@ The variants `inspect_lhs` and `inspect_rhs` do what you imagine, when the goal 
 `a = b`, `a ≠ b`, `a ≤ b`, `a < b`.
 -/
 elab (name := tacticInspect) "inspect" bang:(colGt ppSpace ident)? : tactic => withMainContext do
-  let expr := ← match bang with
+  let expr ← match bang with
     | none => getMainTarget
     | some id => do
       let loc := ← Term.elabTerm id none
