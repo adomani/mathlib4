@@ -4,10 +4,10 @@ open Lean
 namespace InspectGeneric
 
 partial
-def printMe {α} (printNode : α → MessageData) (recurse : α → Option (Array α)) (a : α) :
+def printMe {α} (printNode : α → MessageData) (recurse : α → Array α) (a : α) :
     MessageData :=
-  let recs : Option (Array MessageData) := (recurse a).map (·.map (printMe printNode recurse))
-  let msgs := #[printNode a] ++ recs.getD #[]
+  let recs := (recurse a).map (printMe printNode recurse)
+  let msgs := #[printNode a] ++ recs
   m!"\n".joinSep msgs.toList
 
 partial
