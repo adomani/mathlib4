@@ -176,10 +176,6 @@ def inspectM {m : Type → Type} [Monad m] [MonadLog m] [AddMessageContext m] [M
   logInfo <|
     m!"inspect: '{ex}'\n\n" ++ Expr.toMessageData ex ctor? (indent := indent) (sep := sep)
 
-elab "inspect1" : tactic => do
-  let tgt ← Tactic.getMainTarget
-  logInfo <| m!"inspect: '{tgt}'\n\n" ++ Expr.toMessageData tgt true --(indent := "|   ")
-
 /-- `inspect id?` displays the tree structure of the `Expr`ession in the goal.
 If the optional identifier `id?` is passed, then `inspect` shows the tree-structure for the
 `Expr`ession at the given identifier.
