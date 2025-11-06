@@ -70,10 +70,6 @@ def preRes : Syntax.Preresolved → MessageData
   | .namespace ns => m!"{ns.eraseMacroScopes}"
   | .decl name fields => m!"{name.eraseMacroScopes}: {fields}"
 
-def recurse : Syntax → Option (Array Syntax)
-  | .node _ _ args => args
-  | _ => some #[]
-
 def printNode : Syntax → MessageData
   | .node info kind .. => m!"{.ofConstName ``Syntax.node} {.ofConstName kind}, {si info}"
   | .atom info val => m!"{.ofConstName ``Syntax.atom} {si info}-- '{val}'"
@@ -227,51 +223,51 @@ def CompletionInfo.ctor : CompletionInfo → MessageData
   | .tactic stx         => m!"{.ofConstName ``tactic} {showStx stx}"
 
 /-- Printing out a `PartialContextInfo`. -/
-def ContextInfo.toMessageData : (pci : ContextInfo) → MetaM MessageData
+def ContextInfo.toMessageData : (pci : ContextInfo) → MessageData
     | ci =>
-      return m!"{.ofConstName ``ContextInfo} {ci.parentDecl?.map MessageData.ofConstName}"
+      m!"{.ofConstName ``ContextInfo} {ci.parentDecl?.map MessageData.ofConstName}"
 
 /-- Printing out a `Info`. -/
-def Info.toMessageData : Info → MetaM MessageData
+def Info.toMessageData : Info → MessageData
   | .ofTacticInfo ti         =>
-    return m!"{.ofConstName ``ofTacticInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}"
-  | .ofTermInfo ti           => do
-    return m!"{.ofConstName ``ofTermInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}, {ti.expr}"
+    m!"{.ofConstName ``ofTacticInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}"
+  | .ofTermInfo ti           =>
+    m!"{.ofConstName ``ofTermInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}, {ti.expr}"
   | .ofPartialTermInfo ti    =>
-    return m!"{.ofConstName ``ofPartialTermInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}, \
+    m!"{.ofConstName ``ofPartialTermInfo}: {.ofConstName ti.elaborator}, {showStx ti.stx}, \
                                                                                 {ti.expectedType?}"
   | .ofCommandInfo ci        =>
-    return m!"{.ofConstName ``ofCommandInfo}: {.ofConstName ci.elaborator}, {showStx ci.stx}"
+    m!"{.ofConstName ``ofCommandInfo}: {.ofConstName ci.elaborator}, {showStx ci.stx}"
   | .ofMacroExpansionInfo me =>
-    return m!"{.ofConstName ``ofMacroExpansionInfo}: {showStx me.stx} --> {me.output}"
+    m!"{.ofConstName ``ofMacroExpansionInfo}: {showStx me.stx} --> {me.output}"
   | .ofOptionInfo oi         =>
-    return m!"{.ofConstName ``ofOptionInfo}: {oi.optionName}, {oi.declName}"
+    m!"{.ofConstName ``ofOptionInfo}: {oi.optionName}, {oi.declName}"
   | .ofFieldInfo fi          =>
-    return m!"{.ofConstName ``ofFieldInfo}: {fi.projName}, {fi.fieldName}"
+    m!"{.ofConstName ``ofFieldInfo}: {fi.projName}, {fi.fieldName}"
   | .ofCompletionInfo ci     =>
-    return m!"{.ofConstName ``ofCompletionInfo}.{ci.ctor}"
+    m!"{.ofConstName ``ofCompletionInfo}.{ci.ctor}"
   | .ofUserWidgetInfo _      =>
-    return m!"{.ofConstName ``UserWidgetInfo}"
+    m!"{.ofConstName ``UserWidgetInfo}"
   | .ofCustomInfo ci         =>
-    return m!"{.ofConstName ``ofCustomInfo}: {showStx ci.stx}"
+    m!"{.ofConstName ``ofCustomInfo}: {showStx ci.stx}"
   | .ofFVarAliasInfo fv      =>
-    return m!"{.ofConstName ``ofFVarAliasInfo}: {fv.userName}, {fv.id.name}, {fv.baseId.name}"
+    m!"{.ofConstName ``ofFVarAliasInfo}: {fv.userName}, {fv.id.name}, {fv.baseId.name}"
   | .ofFieldRedeclInfo _     =>
-    return m!"{.ofConstName ``FieldRedeclInfo}"
+    m!"{.ofConstName ``FieldRedeclInfo}"
   | .ofDelabTermInfo _       =>
-    return m!"{.ofConstName ``DelabTermInfo}"
+    m!"{.ofConstName ``DelabTermInfo}"
   | .ofChoiceInfo ci         =>
-    return m!"{.ofConstName ``ofChoiceInfo}: {.ofConstName ci.elaborator}, {showStx ci.stx}"
+    m!"{.ofConstName ``ofChoiceInfo}: {.ofConstName ci.elaborator}, {showStx ci.stx}"
   | .ofDocElabInfo i =>
-    return m!"{.ofConstName ``ofDocElabInfo}: {.ofConstName i.elaborator}, {showStx i.stx}"
+    m!"{.ofConstName ``ofDocElabInfo}: {.ofConstName i.elaborator}, {showStx i.stx}"
   | .ofDocInfo i =>
-    return m!"{.ofConstName ``ofDocInfo}: {.ofConstName i.elaborator}, {showStx i.stx}"
+    m!"{.ofConstName ``ofDocInfo}: {.ofConstName i.elaborator}, {showStx i.stx}"
   | .ofErrorNameInfo i =>
-    return m!"{.ofConstName ``ofErrorNameInfo}: {i.errorName} {showStx i.stx}"
+    m!"{.ofConstName ``ofErrorNameInfo}: {i.errorName} {showStx i.stx}"
 
-def PartialContextInfo.toMessageData : PartialContextInfo → MetaM MessageData
-  | commandCtx _ci => return m!"{.ofConstName ``commandCtx}"
-  | parentDeclCtx parentDecl => return m!"parentDeclCtx {.ofConstName parentDecl}"
+def PartialContextInfo.toMessageData : PartialContextInfo → MessageData
+  | commandCtx _ci => m!"{.ofConstName ``commandCtx}"
+  | parentDeclCtx parentDecl => m!"parentDeclCtx {.ofConstName parentDecl}"
   | autoImplicitCtx .. => default
 
 end Lean.Elab
@@ -283,16 +279,26 @@ namespace InspectInfoTree
 * `MessageData` for the non-`InfoTree` arguments of `it`,
 * an array of the `InfoTree` arguments to `it`.
 -/
-def treeM : InfoTree → MetaM (MessageData × Array InfoTree)
-  | .context i t => return (← i.toMessageData, #[t])
-  | .node i children => return (← i.toMessageData, children.toArray)
-  | .hole mvarId => return (m!"hole {mvarId.name}", #[])
+def treeM : InfoTree → (MessageData × Array InfoTree)
+  | .context i t => (i.toMessageData, #[t])
+  | .node i children => (i.toMessageData, children.toArray)
+  | .hole mvarId => (m!"hole {mvarId.name}", #[])
+
+def printNode : InfoTree → MessageData
+  | .context i t => i.toMessageData
+  | .node i children => i.toMessageData
+  | .hole mvarId => m!"hole {mvarId.name}"
+
+def treeM : InfoTree → (MessageData × Array InfoTree)
+  | .context i t => (i.toMessageData, #[t])
+  | .node i children => (i.toMessageData, children.toArray)
+  | .hole mvarId => (m!"hole {mvarId.name}", #[])
 
 /-- `treeR it` recursively formats the output of `treeM`. -/
 partial
 def treeR (it : InfoTree) (indent : MessageData := "\n") (sep : MessageData := "  ") :
     MetaM MessageData := do
-  let (msg, es) ← treeM it
+  let (msg, es) := treeM it
   let mes ← es.mapM (treeR (indent := indent ++ sep) (sep := sep))
   return mes.foldl (fun x y => (x.compose indent).compose ((m!"|-").compose y)) msg
 
