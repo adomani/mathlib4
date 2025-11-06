@@ -123,6 +123,7 @@ namespace Lean.Expr
 
 open InspectGeneric
 
+/-- `recurse ex` returns the array of maximal sub-expressions of the input expression `ex`. -/
 def recurse : Expr → Array Expr
   | ex@(.app ..)        => ex.getAppArgs
   | .lam _na t b _i     => #[t, b]
@@ -132,6 +133,11 @@ def recurse : Expr → Array Expr
   | .proj _na _id e     => #[e]
   | _ => #[]
 
+/-- `printNode ctor? e` takes as input a `Bool`ean `ctor?` and an `Expr`ession `e` and returns
+a `MessageData` that tries to represent faithfully all the data contained in the head of `e`.
+
+If `ctor?` is `true`, then it also appends the name of the head constructor of `e`.
+-/
 def printNode (ctor? : Bool) (e : Expr) : MessageData :=
   let ctorN := if ctor? then m!" -- {e.ctorName}" else m!""
   (match e with
