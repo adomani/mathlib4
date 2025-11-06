@@ -52,14 +52,6 @@ namespace InspectSyntax
 
 open InspectGeneric Lean Elab Command
 
-def Nat.recurse : Nat → Array Nat
-  | 0 => #[]
-  | n + 1 => #[n]
-
-def Nat.printNode : Nat → MessageData
-  | 0 => m!"0"
-  | n + 1 => m!"s (really {n + 1})"
-
 /-- Print out a `SourceInfo`. -/
 def si : SourceInfo → MessageData
   | .original leading _pos trailing _endPos =>
@@ -248,8 +240,8 @@ info: inspect: 'a + a ≠ 0 + 0'
 |   |-'instHAdd' -- app
 |   |   |-'Nat' '[]' -- const
 |   |   |-'instAddNat' '[]' -- const
-|   |-'_uniq.12198' -- fvar
-|   |-'_uniq.12198' -- fvar
+|   |-'_uniq.11787' -- fvar
+|   |-'_uniq.11787' -- fvar
 |-'HAdd.hAdd' -- app
 |   |-'Nat' '[]' -- const
 |   |-'Nat' '[]' -- const
@@ -276,7 +268,7 @@ info: inspect: 'a ≠ 0'
 
 'Ne' -- app
 |-'Nat' '[]' -- const
-|-'_uniq.12198' -- fvar
+|-'_uniq.11787' -- fvar
 |-'OfNat.ofNat' -- app
 |   |-'Nat' '[]' -- const
 |   |-'0' -- lit
@@ -285,7 +277,7 @@ info: inspect: 'a ≠ 0'
 ---
 info: inspect: 'a ≠ 0'
 
-'_uniq.12205' -- mvar
+'_uniq.11794' -- mvar
 -/
 #guard_msgs in
 example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
@@ -301,14 +293,6 @@ example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
 
 
 /--
-info: s (really 2)
-|-s (really 1)
-  |-0
----
-info: s (really 2)
-|-s (really 1)
-|   |-0
----
 info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 |-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
   |-Syntax.node null, SourceInfo.synthetic false
@@ -333,11 +317,8 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 -/
 #guard_msgs in
 #eval do
-  let n := 2
   let stx ← `(meta section Hello)
 --  logInfo <| printMe Nat.printNode  Nat.recurse    n
-  logInfo <| treeR Nat.printNode    Nat.recurse    n
-  logInfo <| treeR Nat.printNode    Nat.recurse    n   (indent := "|   ")
   logInfo <| treeR Syntax.printNode Syntax.getArgs stx
   logInfo <| treeR Syntax.printNode Syntax.getArgs stx (indent := "| ")
 
