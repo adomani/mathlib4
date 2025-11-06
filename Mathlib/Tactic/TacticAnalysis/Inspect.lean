@@ -302,12 +302,14 @@ end Lean.Elab
 
 namespace InspectInfoTree
 
+/-- Convert an `InfoTree` node to a `MessageData`. -/
 def printNode : InfoTree → MessageData
   | .context i _t => i.toMessageData
   | .node i _children => i.toMessageData
   | .hole mvarId => m!"hole {mvarId.name}"
 
-def recurse : InfoTree → (Array InfoTree)
+/-- `recurse it` returns the array of maximal `InfoTree`s containes in the input `InfoTree` `it`. -/
+def recurse : InfoTree → Array InfoTree
   | .context _i t => #[t]
   | .node _i children => children.toArray
   | .hole _mvarId => #[]
