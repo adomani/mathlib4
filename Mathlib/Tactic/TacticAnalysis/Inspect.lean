@@ -113,7 +113,7 @@ elab (name := inspectSyntaxCmd) "inspect_syntax " cpct:("compact ")? cmd:command
 /--
 `inspect_syntax tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
 -/
-elab (name := inspectTaccticCmd) "inspect_syntax " tacs:tacticSeq : tactic => do
+elab (name := inspectTacticCmd) "inspect_syntax " tacs:tacticSeq : tactic => do
   logInfo (toMessageData tacs)
   Tactic.evalTactic tacs
 
