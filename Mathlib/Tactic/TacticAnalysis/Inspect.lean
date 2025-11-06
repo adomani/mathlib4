@@ -1,5 +1,6 @@
 import Lean.Elab.Command
-open Lean
+
+open Lean Elab Command Tactic
 
 namespace InspectGeneric
 
@@ -65,7 +66,7 @@ end InspectGeneric
 
 namespace InspectSyntax
 
-open InspectGeneric Lean Elab Command
+open InspectGeneric
 
 /-- Print a `SourceInfo`. -/
 def printSourceInfo : SourceInfo → MessageData
@@ -184,7 +185,7 @@ end Lean.Expr
 
 namespace InspectExpr
 
-open Lean Elab Tactic Expr InspectGeneric
+open Expr InspectGeneric
 
 /--
 `toMessageData ex` returns the default formatting of `Expr`ession using `treeR ex`.
@@ -197,6 +198,8 @@ def toMessageData (ex : Expr)
   m!"inspect: '{ex}'\n\n" ++
     treeR (Expr.printNode ctor?) Expr.recurse ex (indent := indent) (sep := sep)
 
+/-- A convenience function: simply logs the output of `InspectExpr.toMessageData` with the
+default values adjusted to what the `inspect` command expects. -/
 def inspectM {m : Type → Type} [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m]
     (ex : Expr) (ctor? : Bool := true) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
     m Unit :=
@@ -230,13 +233,7 @@ elab "inspect_rhs" : tactic => withMainContext do focus do
 
 end InspectExpr
 
-section InspectIT
-
-open InspectGeneric Lean Elab Tactic
-
-def Array.display {α} [ToString α] (a : Array α) (sep : String := "\n  ") : String :=
-  if a.isEmpty then "∅" else
-  sep.intercalate (""::(a.map (s!"{·}")).toList)
+open InspectGeneric
 
 namespace Lean.Elab
 
@@ -295,6 +292,7 @@ def Info.toMessageData : Info → MessageData
   | .ofErrorNameInfo i =>
     m!"{.ofConstName ``ofErrorNameInfo}: {i.errorName} {showStx i.stx}"
 
+/-- Converts a fragment of a `Lean.Elab.PartialContextInfo` into a `MessageData`. -/
 def PartialContextInfo.toMessageData : PartialContextInfo → MessageData
   | commandCtx _ci => m!"{.ofConstName ``commandCtx}"
   | parentDeclCtx parentDecl => m!"parentDeclCtx {.ofConstName parentDecl}"
@@ -303,16 +301,6 @@ def PartialContextInfo.toMessageData : PartialContextInfo → MessageData
 end Lean.Elab
 
 namespace InspectInfoTree
-
-/--
-`treeM it` takes an `InfoTree` and returns a pair consisting of
-* `MessageData` for the non-`InfoTree` arguments of `it`,
-* an array of the `InfoTree` arguments to `it`.
--/
-def treeM : InfoTree → (MessageData × Array InfoTree)
-  | .context i t => (i.toMessageData, #[t])
-  | .node i children => (i.toMessageData, children.toArray)
-  | .hole mvarId => (m!"hole {mvarId.name}", #[])
 
 def printNode : InfoTree → MessageData
   | .context i _t => i.toMessageData
@@ -324,41 +312,24 @@ def recurse : InfoTree → (Array InfoTree)
   | .node _i children => children.toArray
   | .hole _mvarId => #[]
 
-def inspectIT (it : InfoTree) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
-    MessageData :=
-  treeR printNode recurse it (indent := indent) (sep := sep)
-
-elab "inspectIT " cpct:("compact ")? cmd:command : command => do
-  let indent := if cpct.isSome then "| " else "|   "
-  Command.elabCommand cmd
-  for i in ← getInfoTrees do
-    logInfo <| m!"inspectIT:\n---\n{showStx cmd false 0}\n---\n" ++ inspectIT i (indent := indent)
-
-inspectIT
-/-- `treeR it` recursively formats the output of `treeM`. -/
-partial
-def treeR (it : InfoTree) (indent : MessageData := "\n") (sep : MessageData := "  ") :
-    MetaM MessageData := do
-  let (msg, es) := treeM it
-  let mes ← es.mapM (treeR (indent := indent ++ sep) (sep := sep))
-  return mes.foldl (fun x y => (x.compose indent).compose ((m!"|-").compose y)) msg
-
 /--
 `toMessageData it` is the default formatting of the output of `treeR it` that
 uses `| ` to separate nodes.
 -/
-def toMessageData (it : InfoTree) : MetaM MessageData := treeR it (sep := "|   ")
+def inspectIT (it : InfoTree) (sep : MessageData := "\n") (indent : MessageData := "|   ") :
+    MessageData :=
+  treeR printNode recurse it (indent := indent) (sep := sep)
 
-/-- `inspectIT cmd` displays the tree structure of the `InfoTree` when elaborating `cmd`. -/
-elab (name := inspectITStx) "inspectIT " cmd:command : command => do
+/-- `inspectIT cmd` displays the tree structure of the `InfoTree` when elaborating `cmd`.
+
+The variant `inspectIT compact cmd` reduces the horizontal spacing of the output.
+-/
+elab "inspectIT " cpct:("compact ")? cmd:command : command => do
+  let indent := if cpct.isSome then "| " else "|   "
   Command.elabCommand cmd
-  let its ← getInfoTrees
-  let itsMsgs : Array MessageData ← Command.liftTermElabM do Meta.liftMetaM do
-    its.foldlM (init := ∅) fun a b => do
-      let b' ← toMessageData b
-      return (a.push b')
-  logInfo (.joinSep (m!"inspectIT:\n---\n{showStx cmd false 0}\n---" :: itsMsgs.toList) "\n\n")
+  let mut msgs := #[m!"inspectIT:", m!"{showStx cmd false 0}"]
+  for i in ← getInfoTrees do
+    msgs := msgs.push <| inspectIT i (indent := indent)
+  logInfo <| m!"\n---\n".joinSep msgs.toList
 
 end InspectInfoTree
-
-end InspectIT

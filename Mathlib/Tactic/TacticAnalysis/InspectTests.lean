@@ -1,5 +1,6 @@
 import Mathlib.Tactic.TacticAnalysis.Inspect
-
+import Lean.Elab.App
+import Lean.Linter.MissingDocs
 open Lean
 
 open InspectGeneric in
@@ -29,7 +30,6 @@ info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
 #guard_msgs in
 #eval do
   let stx ← `(meta section Hello)
---  logInfo <| printMe Nat.printNode  Nat.recurse    n
   logInfo <| treeR InspectSyntax.printNode Syntax.getArgs stx
   logInfo <| treeR InspectSyntax.printNode Syntax.getArgs stx (indent := "| ")
 
@@ -271,11 +271,10 @@ info: inspectIT:
 ---
 set_option linter.missingDocs true
 ---
-
 commandCtx
 |-Info.ofCommandInfo: Lean.Elab.Command.elabSetOption, 'set_option…gDocs true'
 |   |-Info.ofCompletionInfo.CompletionInfo.option 'set_option…issingDocs'
-|   |-Info.ofOptionInfo: linter.missingDocs, Lean.Linter.linter.missingDocs
+|   |-Info.ofOptionInfo: linter.missingDocs, Linter.linter.missingDocs
 -/
 #guard_msgs in
 inspectIT
@@ -292,14 +291,14 @@ commandCtx
 | |-commandCtx
 | | |-commandCtx
 | | | |-parentDeclCtx _example
-| | | | |-Info.ofTermInfo: Lean.Elab.Term.elabIdent, 'True', True
+| | | | |-Info.ofTermInfo: Term.elabIdent, 'True', True
 | | | | | |-Info.ofCompletionInfo.CompletionInfo.id True 'True' Sort ?u.3511
 | | | | | |-Info.ofTermInfo: [anonymous], 'True', True
 | |-commandCtx
 | | |-commandCtx
 | | | |-parentDeclCtx _example
 | | | | |-Info.ofCustomInfo: '.intro'
-| | | | | |-Info.ofTermInfo: Lean.Elab.Term.elabDotIdent, '.intro', True.intro
+| | | | | |-Info.ofTermInfo: Term.elabDotIdent, '.intro', True.intro
 | | | | | | |-Info.ofCompletionInfo.CompletionInfo.dotId 'intro' True
 | | | | | | |-Info.ofTermInfo: [anonymous], '.intro', True.intro
 | |-commandCtx
