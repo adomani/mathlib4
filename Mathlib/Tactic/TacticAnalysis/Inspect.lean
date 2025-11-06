@@ -101,19 +101,19 @@ def toMessageData (stx : Syntax) (indent : String := "|   ") (sep : String := "\
     treeR InspectSyntax.printNode Syntax.getArgs stx (indent := indent) (sep := sep)
 
 /--
-`inspect cmd` displays the tree structure of the `Syntax` of the command `cmd`.
+`inspect_syntax cmd` displays the tree structure of the `Syntax` of the command `cmd`.
 
-The variant `inspect compact cmd` reduces the horizontal spacing of the output.
+The variant `inspect_syntax compact cmd` reduces the horizontal spacing of the output.
 -/
-elab (name := inspectStx) "inspect " cpct:("compact ")? cmd:command : command => do
+elab (name := inspectSyntaxCmd) "inspect_syntax " cpct:("compact ")? cmd:command : command => do
   let msg := if cpct.isSome then toMessageData cmd "| " else toMessageData cmd
   logInfo msg
   elabCommand cmd
 
 /--
-`inspect tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
+`inspect_syntax tacs` displays the tree structure of the `Syntax` of the tactic sequence `tacs`.
 -/
-elab (name := inspectTac) "inspect " tacs:tacticSeq : tactic => do
+elab (name := inspectTaccticCmd) "inspect_syntax " tacs:tacticSeq : tactic => do
   logInfo (toMessageData tacs)
   Tactic.evalTactic tacs
 
