@@ -1,6 +1,39 @@
 import Mathlib.Tactic.TacticAnalysis.Inspect
 
 open Lean
+
+open InspectGeneric in
+/--
+info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
+|-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.node null, SourceInfo.synthetic false
+    |-Syntax.atom SourceInfo.synthetic false-- 'meta'
+|-Syntax.atom SourceInfo.synthetic false-- 'section'
+|-Syntax.node null, SourceInfo.synthetic false
+  |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello) -- []
+---
+info: Syntax.node Parser.Command.section, SourceInfo.synthetic false
+|-Syntax.node Parser.Command.sectionHeader, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.node null, SourceInfo.synthetic false
+| | |-Syntax.atom SourceInfo.synthetic false-- 'meta'
+|-Syntax.atom SourceInfo.synthetic false-- 'section'
+|-Syntax.node null, SourceInfo.synthetic false
+| |-Syntax.ident SourceInfo.synthetic false-- (Hello,Hello) -- []
+-/
+#guard_msgs in
+#eval do
+  let stx ← `(meta section Hello)
+--  logInfo <| printMe Nat.printNode  Nat.recurse    n
+  logInfo <| treeR InspectSyntax.printNode Syntax.getArgs stx
+  logInfo <| treeR InspectSyntax.printNode Syntax.getArgs stx (indent := "| ")
+
+
 /--
 info: inspect:
 ---
@@ -75,8 +108,8 @@ info: inspect: 'a + a ≠ 0 + 0'
 |   |-'instHAdd' -- app
 |   |   |-'Nat' '[]' -- const
 |   |   |-'instAddNat' '[]' -- const
-|   |-'_uniq.128' -- fvar
-|   |-'_uniq.128' -- fvar
+|   |-'_uniq.3117' -- fvar
+|   |-'_uniq.3117' -- fvar
 |-'HAdd.hAdd' -- app
 |   |-'Nat' '[]' -- const
 |   |-'Nat' '[]' -- const
@@ -103,7 +136,7 @@ info: inspect: 'a ≠ 0'
 
 'Ne' -- app
 |-'Nat' '[]' -- const
-|-'_uniq.128' -- fvar
+|-'_uniq.3117' -- fvar
 |-'OfNat.ofNat' -- app
 |   |-'Nat' '[]' -- const
 |   |-'0' -- lit
@@ -112,7 +145,7 @@ info: inspect: 'a ≠ 0'
 ---
 info: inspect: 'a ≠ 0'
 
-'_uniq.135' -- mvar
+'_uniq.3124' -- mvar
 -/
 #guard_msgs in
 example {a : Nat} (h : a ≠ 0) : (a + a ≠ 0 + 0) ≠ False := by
