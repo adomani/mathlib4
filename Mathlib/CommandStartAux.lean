@@ -614,6 +614,7 @@ def unparseable : ExcludedSyntaxNodeKind where
   kinds := #[
     ``Parser.Command.macro_rules,
     ``runCmd,
+    `Mathlib.Tactic.subscriptTerm, -- TODO: subscripts should be handled better.
   ]
   depth := none
 
@@ -881,7 +882,7 @@ elab "#show_corr " cmd:command : command => do
   let stxNoSpaces := cmd.raw.eraseLeadTrailSpaces
   if let some pretty := ← Mathlib.Linter1.pretty stxNoSpaces then
     let pp := pretty.toRawSubstring
-    let (_, corr) ← generateCorrespondence true Std.HashMap.emptyWithCapacity #[] cmd pretty.toRawSubstring
+    let (_, corr) ← generateCorrespondence true Std.HashMap.emptyWithCapacity #[] cmd pp
     for (origPos, ppR) in corr do
       let ppPos := ppR.pos
       let origAtPos := {orig with startPos := origPos}
@@ -900,9 +901,9 @@ elab "#show_corr " cmd:command : command => do
       msgs := msgs.push (
         {fm.toPosition a with column := (fm.toPosition a).column + 1},
           b.pos,
-          "'".push (pretty.toRawSubstring.get (pretty.toRawSubstring.prev b.pos))
-            |>.push (pretty.toRawSubstring.get b.pos)
-            |>.push (pretty.toRawSubstring.get (pretty.toRawSubstring.next b.pos))
+          "'".push (pp.get (pp.prev b.pos))
+            |>.push (pp.get b.pos)
+            |>.push (pp.get (pp.next b.pos))
             |>.push '\'',
           b.ok,
           b.bracket,

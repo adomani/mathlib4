@@ -440,7 +440,7 @@ def mkExpectedWindow (orig : Substring.Raw) (start : String.Pos.Raw) : String :=
 
 #guard mkExpectedWindow "0123 abc    \n def ghi".toRawSubstring ⟨9⟩ == "abc def"
 
-def _root_.Mathlib.Linter.mex.mkWindow (orig : Substring.Raw) (m : mex) (ctx : Nat := 4) : String :=
+def _root_.Mathlib.Linter1.mex.mkWindow (orig : Substring.Raw) (m : mex) (ctx : Nat := 4) : String :=
   let lth := ({orig with startPos := m.rg.start, stopPos := m.rg.stop}).toString.length
   mkWindowSubstring orig m.rg.start (ctx + lth)
 
@@ -553,6 +553,7 @@ def commandStartLinter : Linter where run := withSetOptionIn fun stx ↦ do
   if let some pretty := ← Mathlib.Linter1.pretty stxNoSpaces then
     let pp := pretty.toRawSubstring
     let (_, corr) ← generateCorrespondence true Std.HashMap.emptyWithCapacity #[] stx pretty.toRawSubstring
+    --dbg_trace pretty.toRawSubstring
     let (reported, excluded) := corr.partition fun _ {kinds := ks,..} => !totalExclusions.contains ks
     let fm ← getFileMap
     --dbg_trace "reported: {reported.toArray.map (fm.toPosition ·.1)}"
@@ -567,6 +568,7 @@ def commandStartLinter : Linter where run := withSetOptionIn fun stx ↦ do
           -- TODO: temporary change, hopefully reduces no-op warning spew
           if !((mkWdw origAtPos).contains '¬' || (mkWdw origAtPos).contains '-' || (mkWdw origAtPos).startsWith "suffices" || (mkWdw origAtPos).contains '⊢' || (mkWdw origAtPos).contains "π ") then
             Linter.logLint linter.style.commandStart1 (.ofRange rg)
+              --m!"{msg} {ppR.kinds}\n\n\
               m!"{msg}\n\n\
               This part of the code\n  '{mkWdw origAtPos}'\n\
               should be written as\n  '{mkWdw ppAtPos mid}'\n"
