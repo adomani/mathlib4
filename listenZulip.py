@@ -51,7 +51,6 @@ for message in messages:
   reactions = message['reactions']
   emojiFound=''
   shouldPrint=False
-  zenodo=False
   info=f"#**{message['display_recipient']}>{message['subject']}** "
   # Check for emoji reactions
   for emo in emojis:
@@ -63,14 +62,15 @@ for message in messages:
       emojiFound=f"{emojiFound}{count} {emo} "
       shouldPrint=True
   # Check for substrings
+  subs=[]
   for sub in substrings:
     if re.search(f"{sub}", f"{content}", re.IGNORECASE):
       shouldPrint=True
-      zenodo=True
+      subs=subs + [sub]
   # Report, if appropriate
   if shouldPrint:
     print(f"\n{info}")
     if emojiFound:
       print(f'* {emojiFound.rstrip()}')
-    if zenodo:
-      print(f"* Contains zenodo")
+    if subs:
+      print(f"* Contains {subs}")
