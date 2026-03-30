@@ -49,11 +49,11 @@ messages=reviewers_response['messages']
 for message in messages:
   content = message['content']
   reactions = message['reactions']
-  # Check for emoji reactions
   emojiFound=''
   shouldPrint=False
   zenodo=False
   info=f"#**{message['display_recipient']}>{message['subject']}** "
+  # Check for emoji reactions
   for emo in emojis:
     count=0
     for r in reactions:
@@ -62,10 +62,12 @@ for message in messages:
     if count != 0:
       emojiFound=f"{emojiFound}{count} {emo} "
       shouldPrint=True
+  # Check for substrings
   for sub in substrings:
     if re.search(f"{sub}", f"{content}", re.IGNORECASE):
       shouldPrint=True
       zenodo=True
+  # Report, if appropriate
   if shouldPrint:
     print(f"\n{info}")
     if emojiFound:
