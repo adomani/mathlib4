@@ -83,6 +83,7 @@ public import Mathlib.Tactic.ComputeAsymptotics.Multiseries.Monomial.Basic
 public import Mathlib.Tactic.ComputeAsymptotics.Multiseries.Monomial.Predicates
 public import Mathlib.Tactic.ComputeAsymptotics.Multiseries.Trimming
 public import Mathlib.Tactic.ComputeDegree
+public import Mathlib.Tactic.ComputeDegree.Core
 public import Mathlib.Tactic.CongrExclamation
 public import Mathlib.Tactic.CongrM
 public import Mathlib.Tactic.Constructor

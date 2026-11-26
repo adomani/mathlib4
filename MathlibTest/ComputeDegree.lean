@@ -78,16 +78,15 @@ error: The given degree is '0'.  However,
 example : natDegree (X + X ^ 2 : ℕ[X]) = 0 := by compute_degree!
 
 /--
-error: 'compute_degree' inapplicable. The goal
+error: 'compute_degree' inapplicable. No '@[compute_degree]' lemma applies to the goal
   X.natDegree ≠ 0
-is expected to be '≤', '<' or '='.
 -/
 #guard_msgs in
 example : natDegree (X : ℕ[X]) ≠ 0 := by compute_degree!
 
 /--
-error:
-'compute_degree' inapplicable. The LHS must be an application of 'natDegree', 'degree', or 'coeff'.
+error: 'compute_degree' inapplicable. No '@[compute_degree]' lemma applies to the goal
+  0 ≤ 0
 -/
 #guard_msgs in
 example : 0 ≤ 0 := by compute_degree!
@@ -268,3 +267,18 @@ example : natDegree (-X + 8 * X ^ 7 : ℤ[X]) = 7 := by compute_degree!
 example : natDegree (-(2 * X) + 8 * X ^ 7 : ℤ[X]) = 7 := by compute_degree!
 
 example : natDegree (-(X ^ 3 - 1) : ℤ[X]) = 3 := by compute_degree!
+
+/-! Extending `compute_degree` with a `@[compute_degree]` lemma. -/
+
+section extension
+
+theorem natDegree_comp_le_of_le {p q : ℤ[X]} {m n : ℕ} (hp : natDegree p ≤ m)
+    (hq : natDegree q ≤ n) : natDegree (p.comp q) ≤ m * n :=
+  natDegree_comp_le.trans (Nat.mul_le_mul hp hq)
+
+attribute [local compute_degree] natDegree_comp_le_of_le
+
+example : natDegree ((X ^ 2 + 1).comp (X ^ 3 + X) : ℤ[X]) ≤ 6 := by
+  compute_degree!
+
+end extension
