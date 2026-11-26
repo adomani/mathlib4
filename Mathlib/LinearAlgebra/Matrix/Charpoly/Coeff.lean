@@ -365,8 +365,8 @@ lemma isNilpotent_charpoly_sub_pow_of_isNilpotent (hM : IsNilpotent M) :
     simp [p, modByMonic_X]
   have : IsNilpotent (p /ₘ X) :=
     (Polynomial.isUnit_iff'.mp (isUnit_charpolyRev_of_isNilpotent hM)).2
-  have aux : (M.charpoly - X ^ (Fintype.card n)).natDegree ≤ M.charpoly.natDegree :=
-    le_trans (natDegree_sub_le _ _) (by simp)
+  have aux : (M.charpoly - X ^ (Fintype.card n)).natDegree ≤ M.charpoly.natDegree := by
+    compute_degree!
   rw [← isNilpotent_reflect_iff aux, reflect_sub, ← reverse, M.reverse_charpoly]
   simpa [p, hp]
 

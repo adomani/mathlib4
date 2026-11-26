@@ -6,6 +6,7 @@ Authors: Damiano Testa
 module
 
 public import Mathlib.Algebra.Polynomial.Monic
+public import Mathlib.Tactic.ComputeDegree
 
 /-!
 # `Monic` does not necessarily imply `IsRegular` in a `Semiring` with no opposites
@@ -89,10 +90,7 @@ theorem X_add_two_mul_X_add_two : (X + C 2 : N₃[X]) * (X + C 2) = (X + C 2) * 
 yet the polynomial is monic. -/
 
 theorem monic_X_add_two : Monic (X + C 2 : N₃[X]) := by
-  unfold Monic leadingCoeff
-  nontriviality
-  rw [natDegree_X_add_C 2]
-  simp only [coeff_C, coeff_add, coeff_X_one, ite_false, add_zero, reduceCtorEq]
+  monicity
 
 theorem not_isLeftRegular_X_add_two : ¬ IsLeftRegular (X + C 2 : N₃[X]) := by
   intro h

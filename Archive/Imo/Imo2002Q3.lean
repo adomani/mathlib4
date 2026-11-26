@@ -42,15 +42,7 @@ lemma natDegree_numerpol : (X ^ m + X - 1 : ℤ[X]).natDegree = m := by
 
 include hm in
 lemma monic_numerpol : (X ^ m + X - 1 : ℤ[X]).Monic := by
-  apply Monic.sub_of_left
-  · apply monic_X_pow_add
-    rw [degree_X, Nat.one_lt_cast]
-    lia
-  · rw [degree_one, degree_add_eq_left_of_degree_lt]
-    · simp_rw [degree_X_pow, Nat.cast_pos]
-      lia
-    · rw [degree_X_pow, degree_X, Nat.one_lt_cast]
-      lia
+  monicity <;> grind
 
 include hn in
 lemma natDegree_denompol : (X ^ n + X ^ 2 - 1 : ℤ[X]).natDegree = n := by
@@ -58,15 +50,7 @@ lemma natDegree_denompol : (X ^ n + X ^ 2 - 1 : ℤ[X]).natDegree = n := by
 
 include hn in
 lemma monic_denompol : (X ^ n + X ^ 2 - 1 : ℤ[X]).Monic := by
-  apply Monic.sub_of_left
-  · apply monic_X_pow_add
-    rw [degree_X_pow, Nat.cast_lt]
-    lia
-  · rw [degree_one, degree_add_eq_left_of_degree_lt]
-    · simp_rw [degree_X_pow, Nat.cast_pos]
-      lia
-    · simp_rw [degree_X_pow, Nat.cast_lt]
-      lia
+  monicity <;> grind
 
 include hm hn in
 lemma proof_body (h : {a : ℤ | 0 < a ∧ a ^ n + a ^ 2 - 1 ∣ a ^ m + a - 1}.Infinite) :
